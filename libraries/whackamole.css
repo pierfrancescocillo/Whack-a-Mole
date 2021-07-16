@@ -1,0 +1,25 @@
+h1
+{
+	font-family: "Montserrat";
+	font-size: 35px;
+	position: absolute;
+	top: 0px;
+	color: white;
+	text-align: center;
+}
+
+#Timer
+{
+	margin-left: 25px;
+	top: 45px;
+}
+
+#score
+{
+	margin-left: 25px;
+}
+
+#hScore
+{
+	margin-left: 680px;
+}
