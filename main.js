@@ -5,13 +5,16 @@ var canvasPos = getPosition(canvas);
 
 var mouse_x = 0;
 var mouse_y = 0;
-
+var clipX;
+var clipY;
+/*
 document.onmousemove = function(e) {
     mouse_x = e.clientX - canvasPos.x;
     mouse_y = e.clientY - canvasPos.y;
-    console.log(mouse_x,mouse_y);
+    clipX = mouse_x / canvas.width  *  2 - 1;
+    clipY = mouse_y / canvas.height * -2 + 1;
 }
-
+*/
 var temp = 4;
 
 function parseOBJ(text) {
@@ -215,6 +218,11 @@ async function main() {
         // Make a view matrix from the camera matrix.
         const view = m4.inverse(camera);
 
+        const viewProjection = m4.multiply(projection, view);
+        const invMat = m4.inverse(viewProjection);
+        const start = m4.transformPoint(invMat, [clipX, clipY, -1]);
+        const end   = m4.transformPoint(invMat, [clipX, clipY,  1]);
+
         const sharedUniforms = {
         u_lightDirection: m4.normalize([-1, 3, 5]),
         u_view: view,
@@ -231,9 +239,9 @@ async function main() {
 
         // calls gl.uniform
         webglUtils.setUniforms(meshProgramInfo, {
-        //u_world: m4.yRotation(time),
+        u_world: m4.yRotation(time),
         //u_world: m4.translation(mouse_x,mouse_y,0),
-        u_world: [1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1],
+        //u_world: [1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1],
         u_diffuse: [1, 0.7, 0.5, 1],
         });
 
@@ -246,8 +254,9 @@ async function main() {
         // calls gl.uniform
         webglUtils.setUniforms(meshProgramInfo, {
         //u_world: m4.yRotation(time),
-        u_world: m4.translation(mouse_x / canvas.width * 2*temp - temp, mouse_y / -canvas.height * 2*temp + temp,0),
-        //u_world: [1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1],
+        //u_world: m4.translation(mouse_x / canvas.width * 2*temp - temp, mouse_y / -canvas.height * 2*temp + temp,0),
+        u_world: [1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1],
+       // u_world: m4.transformPoint(invMat, [clipX, clipY, -1]),
         u_diffuse: [1, 0.7, 0.5, 1],
         });
 
