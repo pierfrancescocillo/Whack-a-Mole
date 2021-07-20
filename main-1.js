@@ -183,7 +183,7 @@ async function main() {
     const bufferInfo_hammer = webglUtils.createBufferInfoFromArrays(gl, data_hammer);
 
     const cameraTarget = [0, 0, 0];
-    const cameraPosition = [0, 0, 4];
+    const cameraPosition = [0, 3, 3];
     const zNear = 0.1;
     const zFar = 50;
 
@@ -246,15 +246,15 @@ async function main() {
         // calls gl.drawArrays or gl.drawElements
         webglUtils.drawBufferInfo(gl, bufferInfo_cabinet);
         
-        const end   = m4.transformPoint(invMat, [clipX, clipY,  1]);
-        console.log(clipX,clipY);
-        console.log(end);
+        const end   = m4.transformPoint(invMat, [clipX, clipY,  0.92]);
+
         // calls gl.bindBuffer, gl.enableVertexAttribArray, gl.vertexAttribPointer
         webglUtils.setBuffersAndAttributes(gl, meshProgramInfo, bufferInfo_hammer);
         // calls gl.uniform
         webglUtils.setUniforms(meshProgramInfo, {
         //u_world: m4.yRotation(time),
-        u_world: m4.translation((cameraTarget[2] - cameraPosition[2])*end[0]/(end[2] + (cameraTarget[2] - cameraPosition[2])),(cameraTarget[2] - cameraPosition[2])*end[1]/(end[2] + (cameraTarget[2] - cameraPosition[2])), 0),
+        //u_world: m4.translation((cameraTarget[2] - cameraPosition[2])*end[0]/(end[2] + (cameraTarget[2] - cameraPosition[2])),(cameraTarget[2] - cameraPosition[2])*end[1]/(end[2] + (cameraTarget[2] - cameraPosition[2])), (cameraTarget[2] - cameraPosition[2])*end[2]/(end[2] + (cameraTarget[2] - cameraPosition[2]))),
+        u_world: m4.translation(end[0],end[1],end[2]),
         //u_world: [1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1],
         u_diffuse: [1, 0.7, 0.5, 1],
         });
