@@ -9,10 +9,10 @@ var clipX;
 var clipY;
 
 document.onmousemove = function(e) {
-    mouse_x = e.clientX - canvasPos.x;
-    mouse_y = e.clientY - canvasPos.y;
-    clipX = (mouse_x / canvas.width  *  2 - 1);
-    clipY = (mouse_y / canvas.height * -2 + 1);
+  mouse_x = e.clientX - canvasPos.x;
+  mouse_y = e.clientY - canvasPos.y;
+  clipX = (mouse_x / canvas.width  *  2 - 1);
+  clipY = (mouse_y / canvas.height * -2 + 1);
 }
 
 var temp = 1;
@@ -247,13 +247,14 @@ async function main() {
         webglUtils.drawBufferInfo(gl, bufferInfo_cabinet);
         
         const end   = m4.transformPoint(invMat, [clipX, clipY,  1]);
+        console.log(clipX,clipY);
         console.log(end);
         // calls gl.bindBuffer, gl.enableVertexAttribArray, gl.vertexAttribPointer
         webglUtils.setBuffersAndAttributes(gl, meshProgramInfo, bufferInfo_hammer);
         // calls gl.uniform
         webglUtils.setUniforms(meshProgramInfo, {
         //u_world: m4.yRotation(time),
-        u_world: m4.translation(end[0],end[1], end[2]),
+        u_world: m4.translation((cameraTarget[2] - cameraPosition[2])*end[0]/(end[2] + (cameraTarget[2] - cameraPosition[2])),(cameraTarget[2] - cameraPosition[2])*end[1]/(end[2] + (cameraTarget[2] - cameraPosition[2])), 0),
         //u_world: [1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1],
         u_diffuse: [1, 0.7, 0.5, 1],
         });
