@@ -8,11 +8,37 @@ var mouse_y = 0;
 var clipX;
 var clipY;
 
+var c;
+var hamm_world;
+
+//booleani utili
+var boolClick = 0;
+
 document.onmousemove = function(e) {
   mouse_x = e.clientX - canvasPos.x;
   mouse_y = e.clientY - canvasPos.y;
   clipX = (mouse_x / canvas.width  *  2 - 1);
   clipY = (mouse_y / canvas.height * -2 + 1);
+}
+
+canvas.addEventListener('mousedown', clicked, false);
+function clicked(e){
+  switch (e.button) {
+    case 0:
+      // left mouse button
+      leftClick();
+      break;
+    case 1:
+      // middle mouse button
+      break;
+    default:
+      console.log('You right clicked!') ; // 2 === right mouse button
+  }
+};
+
+function leftClick(){
+  boolClick = 1;
+  c = 0;
 }
 
 var temp = 1;
@@ -246,22 +272,34 @@ async function main() {
         // calls gl.drawArrays or gl.drawElements
         webglUtils.drawBufferInfo(gl, bufferInfo_cabinet);
         
-        const end   = m4.transformPoint(invMat, [clipX, clipY,  0.92]);
+        const end  = m4.transformPoint(invMat, [clipX, clipY,  0.92]);
+        if(boolClick != 0){
+          if(c*Math.PI/2 < Math.PI/2){
+            hamm_world = utils.multiplyMatrices(utils.multiplyMatrices(m4.translation(0,1,0), m4.xRotation(-c*Math.PI/2)), m4.translation(0,-1,0));
+          } else {
+            hamm_world = utils.multiplyMatrices(utils.multiplyMatrices(utils.multiplyMatrices(m4.translation(0,1,0), m4.xRotation(c*Math.PI/2)), m4.xRotation(Math.PI)),m4.translation(0,-1,0));
+          }
+          c = c + time*0.001;
+          if(c*Math.PI/2 > Math.PI){
+            boolClick = 0;
+          }
+        } else {
+          hamm_world = m4.identity();
+        }
 
         // calls gl.bindBuffer, gl.enableVertexAttribArray, gl.vertexAttribPointer
         webglUtils.setBuffersAndAttributes(gl, meshProgramInfo, bufferInfo_hammer);
         // calls gl.uniform
         webglUtils.setUniforms(meshProgramInfo, {
         //u_world: m4.yRotation(time),
-        //u_world: m4.translation((cameraTarget[2] - cameraPosition[2])*end[0]/(end[2] + (cameraTarget[2] - cameraPosition[2])),(cameraTarget[2] - cameraPosition[2])*end[1]/(end[2] + (cameraTarget[2] - cameraPosition[2])), (cameraTarget[2] - cameraPosition[2])*end[2]/(end[2] + (cameraTarget[2] - cameraPosition[2]))),
-        u_world: m4.translation(end[0],end[1],end[2]),
+        //u_world: m4.translation(end[0],end[1],end[2]),
         //u_world: [1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1],
+        u_world: utils.multiplyMatrices(hamm_world, m4.translation(end[0],end[1],end[2])),
         u_diffuse: [1, 0.7, 0.5, 1],
         });
 
         // calls gl.drawArrays or gl.drawElements
         webglUtils.drawBufferInfo(gl, bufferInfo_hammer);
-
 
         requestAnimationFrame(render);
     }
