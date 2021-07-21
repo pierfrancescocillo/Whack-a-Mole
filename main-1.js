@@ -191,6 +191,9 @@ async function main() {
     const text_hammer = await response_hammer.text();
     const data_hammer = parseOBJ(text_hammer);
 
+    const response_mole = await fetch('objects/mole.obj');  
+    const text_mole = await response_mole.text();
+    const data_mole = parseOBJ(text_mole);
     // Because data is just named arrays like this
     //
     // {
@@ -207,6 +210,7 @@ async function main() {
     // gl.createBuffer, gl.bindBuffer, gl.bufferData
     const bufferInfo_cabinet = webglUtils.createBufferInfoFromArrays(gl, data_cabinet);
     const bufferInfo_hammer = webglUtils.createBufferInfoFromArrays(gl, data_hammer);
+    const bufferInfo_mole = webglUtils.createBufferInfoFromArrays(gl, data_mole);
 
     const cameraTarget = [0, 0, 0];
     const cameraPosition = [0, 3, 3];
@@ -300,6 +304,57 @@ async function main() {
 
         // calls gl.drawArrays or gl.drawElements
         webglUtils.drawBufferInfo(gl, bufferInfo_hammer);
+      
+
+webglUtils.setBuffersAndAttributes(gl, meshProgramInfo, bufferInfo_mole);
+        var Ry=0.1;
+
+var stop=false;
+var mole_world= [1,  0,  0,   0,
+  0,  1,  0,   0,
+  0,  0,  1,   0,
+  0.32,  0,  0.6,  1];
+var play=true;
+var Ry=0;
+  if (play){
+    if(Ry<=0 && stop==false){
+      Ry=+time;
+    }
+    if(Ry>1.0){
+      Ry=-time+2.0;
+      stop=true;
+    }
+    if(Ry<0 && stop==true){
+      Ry=0;
+    }
+    mole_world=utils.multiplyMatrices(mole_world, m4.translation(0,Ry,0))
+  }else{
+    mole_world=[1,  0,  0,   0,
+      0,  1,  0,   0,
+      0,  0,  1,   0,
+      0.32,  0,  0.6,  1];
+  }
+      //return(m4.translation(0.32,Ry,0.6))
+ //  return(m4.translation(0.32,Ry,0.6));
+ //return(m4.translation(0.32,Ry,0.6));
+    
+              
+       webglUtils.setUniforms(meshProgramInfo, {
+          //u_world: m4.yRotation(time),
+          //u_world: m4.translation((cameraTarget[2] - cameraPosition[2])*end[0]/(end[2] + (cameraTarget[2] - cameraPosition[2])),(cameraTarget[2] - cameraPosition[2])*end[1]/(end[2] + (cameraTarget[2] - cameraPosition[2])), (cameraTarget[2] - cameraPosition[2])*end[2]/(end[2] + (cameraTarget[2] - cameraPosition[2]))),
+         /*u_world:[1,  0,  0,   0,
+                   0,  1,  0,   0,
+                   0,  0,  1,   0,
+                   0.32,  1,  0.6,  1],*/
+           // u_world:animate(),
+           u_world: mole_world,
+          //u_world:[1,0,0,0,0,1,0,0,0,0,1.2,0,0.27,1,1,1],
+          //u_world: [1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1],
+           u_diffuse: [1, 0.7, 0.5, 1],
+
+        });
+        webglUtils.drawBufferInfo(gl, bufferInfo_mole);
+
 
         requestAnimationFrame(render);
     }
