@@ -24,6 +24,22 @@ document.onmousemove = function(e) {
   clipY = (mouse_y / canvas.height * -2 + 1);
 }
 
+//Assigning value to the sliders------------------------------------------------------------
+document.getElementById("rho_value").innerHTML = document.getElementById("sl_rho").value;
+document.getElementById("sl_rho").oninput = function(){
+  document.getElementById("rho_value").innerHTML = this.value;
+}
+
+document.getElementById("theta_value").innerHTML = document.getElementById("sl_theta").value;
+document.getElementById("sl_theta").oninput = function(){
+  document.getElementById("theta_value").innerHTML = this.value;
+}
+
+document.getElementById("phi_value").innerHTML = document.getElementById("sl_phi").value;
+document.getElementById("sl_phi").oninput = function(){
+  document.getElementById("phi_value").innerHTML = this.value;
+}
+
 canvas.addEventListener('mousedown', clicked, false);
 function clicked(e){
   switch (e.button) {
@@ -217,7 +233,7 @@ async function main() {
   const bufferInfo_mole = webglUtils.createBufferInfoFromArrays(gl, data_mole);
   
   const cameraTarget = [0, 0, 0];
-  const cameraPosition = [0, 3, 3];
+  var cameraPosition = [0, 3, 3];
   const zNear = 0.1;
   const zFar = 50;
   var then=0;
@@ -225,8 +241,15 @@ async function main() {
     return deg * Math.PI / 180;
   }
   var then=0;
-  requestAnimationFrame(render);
+  
   function render(time2) {
+
+    cameraPosition = [
+      cameraTarget[0] + document.getElementById("sl_rho").value * Math.cos(degToRad(document.getElementById("sl_theta").value)) * Math.sin(degToRad(document.getElementById("sl_phi").value)),
+      cameraTarget[1] + document.getElementById("sl_rho").value * Math.sin(degToRad(document.getElementById("sl_theta").value)),
+      cameraTarget[2] + document.getElementById("sl_rho").value * Math.cos(degToRad(document.getElementById("sl_theta").value)) * Math.cos(degToRad(document.getElementById("sl_phi").value))
+    ]
+
     gl.clearColor(0.75,0.85,0.8,1.0);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.enable(gl.DEPTH_TEST);
@@ -299,89 +322,89 @@ async function main() {
       hamm_world = m4.identity();
     }
 
-    // calls gl.bindBuffer, gl.enableVertexAttribArray, gl.vertexAttribPointer
-    webglUtils.setBuffersAndAttributes(gl, meshProgramInfo, bufferInfo_hammer);
-    // calls gl.uniform
-    webglUtils.setUniforms(meshProgramInfo, {
-    //u_world: m4.yRotation(time),
-    //u_world: m4.translation(end[0],end[1],end[2]),
-    //u_world: [1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1],
-    u_world: utils.multiplyMatrices(hamm_world, m4.translation(end[0],end[1],end[2])),
-    u_diffuse: [1, 0.7, 0.5, 1],
-    });
+      // calls gl.bindBuffer, gl.enableVertexAttribArray, gl.vertexAttribPointer
+      webglUtils.setBuffersAndAttributes(gl, meshProgramInfo, bufferInfo_hammer);
+      // calls gl.uniform
+      webglUtils.setUniforms(meshProgramInfo, {
+      //u_world: m4.yRotation(time),
+      //u_world: m4.translation(end[0],end[1],end[2]),
+      //u_world: [1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1],
+      u_world: utils.multiplyMatrices(hamm_world, m4.translation(end[0],end[1],end[2])),
+      u_diffuse: [1, 0.7, 0.5, 1],
+      });
 
-    // calls gl.drawArrays or gl.drawElements
-    webglUtils.drawBufferInfo(gl, bufferInfo_hammer);
+      // calls gl.drawArrays or gl.drawElements
+      webglUtils.drawBufferInfo(gl, bufferInfo_hammer);
 
-    webglUtils.setBuffersAndAttributes(gl, meshProgramInfo, bufferInfo_mole);
-    var Ry=0;
-var stop=false;
-var play=true;
-var mole_world=[1,  0,  0,   0,
-  0,  1,  0,   0,
-  0,  0,  1,   0,
-  0.32,  0,  0.6,  1];
+      webglUtils.setBuffersAndAttributes(gl, meshProgramInfo, bufferInfo_mole);
+      var Ry=0;
+      var stop=false;
+      var play=true;
+      var mole_world=[1,  0,  0,   0,
+        0,  1,  0,   0,
+        0,  0,  1,   0,
+        0.32,  0,  0.6,  1];
 
-/*if(play==true){
-animate();
-} else {
-  mole_world=[1,  0,  0,   0,
-    0,  1,  0,   0,
-    0,  0,  1,   0,
-    0.32,  0.2,  0.6,  1];
-}*/
- var Ryini=0;
- var Ryfin=1.0;
- var tini=0;
- var tfin=1.0;
-//console.log(delta);
- //tini = tini + timeInt*0.001;
- //tfin= tfin+timeInt*0.001;
- var one=false;
- function upmole(){
- Ry = Ryini + (time - tini) * (Ryfin - Ryini) / (tfin - tini);
- //Ry=0+time*1/1
- if(Ry>=1.0){
-  Ryini=Ryfin;
-  Ryfin=0.0;
-  tini=tfin;
-  tfin=tfin*2;
-   downmole();
- }
-}
-function downmole(){
-  //tini=tfin;
-//  Ry = Ryini + (time - tini) * (Ryfin - Ryini) / (tfin - tini)
-Ry = Ryini + (time - tini) * (Ryfin - Ryini) / (tfin - tini);
-//Ry=-Ry+tfin;
-  if(Ry<=0){
-    Ryini=Ryfin;
-    Ryfin=1.0;
-    tini=tfin;
-    tfin=tfin*2;
-    upmole();
-  /*  Ryini=0;
-    Ryfin=1.0;*/
-    //tin=tfin;
-    /*var random1=Math.random();
-    if(random>=0.5){
-    upmole();
+      /*if(play==true){
+      animate();
+      } else {
+        mole_world=[1,  0,  0,   0,
+          0,  1,  0,   0,
+          0,  0,  1,   0,
+          0.32,  0.2,  0.6,  1];
+      }*/
+      var Ryini=0;
+      var Ryfin=1.0;
+      var tini=0;
+      var tfin=1.0;
+      //console.log(delta);
+      //tini = tini + timeInt*0.001;
+      //tfin= tfin+timeInt*0.001;
+      var one=false;
+      function upmole(){
+      Ry = Ryini + (time - tini) * (Ryfin - Ryini) / (tfin - tini);
+      //Ry=0+time*1/1
+      if(Ry>=1.0){
+        Ryini=Ryfin;
+        Ryfin=0.0;
+        tini=tfin;
+        tfin=tfin*2;
+        downmole();
+      }
     }
-    if(random>=0.5){
-      nomole();
-    }*/
-}
-};
-upmole();
-//console.log(time2);
-mole_world= utils.multiplyMatrices(mole_world, m4.translation(0,Ry,0))
-/*}else {
-    mole_world=[1,  0,  0,   0,
-      0,  1,  0,   0,
-      0,  0,  1,   0,
-      0.32,  0,  0.6,  1];
-  }
-*/
+    function downmole(){
+      //tini=tfin;
+      //  Ry = Ryini + (time - tini) * (Ryfin - Ryini) / (tfin - tini)
+      Ry = Ryini + (time - tini) * (Ryfin - Ryini) / (tfin - tini);
+      //Ry=-Ry+tfin;
+      if(Ry<=0){
+        Ryini=Ryfin;
+        Ryfin=1.0;
+        tini=tfin;
+        tfin=tfin*2;
+        upmole();
+        /*  Ryini=0;
+        Ryfin=1.0;*/
+        //tin=tfin;
+        /*var random1=Math.random();
+        if(random>=0.5){
+        upmole();
+        }
+        if(random>=0.5){
+          nomole();
+        }*/
+      }
+    };
+    upmole();
+    //console.log(time2);
+    mole_world= utils.multiplyMatrices(mole_world, m4.translation(0,Ry,0))
+    /*}else {
+      mole_world=[1,  0,  0,   0,
+        0,  1,  0,   0,
+        0,  0,  1,   0,
+        0.32,  0,  0.6,  1];
+    }
+    */
           
    webglUtils.setUniforms(meshProgramInfo, {
       //u_world: m4.yRotation(time),
