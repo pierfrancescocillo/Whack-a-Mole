@@ -9,6 +9,7 @@ var clipX;
 var clipY;
 
 var time = 0;
+//var time2=0;
 var timeInt = 5; //[ms]
 var c;
 var hamm_world;
@@ -193,6 +194,10 @@ async function main() {
   const text_hammer = await response_hammer.text();
   const data_hammer = parseOBJ(text_hammer);
 
+  const response_mole = await fetch('objects/mole.obj');  
+  const text_mole = await response_mole.text();
+  const data_mole = parseOBJ(text_mole);
+
   // Because data is just named arrays like this
   //
   // {
@@ -209,25 +214,30 @@ async function main() {
   // gl.createBuffer, gl.bindBuffer, gl.bufferData
   const bufferInfo_cabinet = webglUtils.createBufferInfoFromArrays(gl, data_cabinet);
   const bufferInfo_hammer = webglUtils.createBufferInfoFromArrays(gl, data_hammer);
-
+  const bufferInfo_mole = webglUtils.createBufferInfoFromArrays(gl, data_mole);
+  
   const cameraTarget = [0, 0, 0];
   const cameraPosition = [0, 3, 3];
   const zNear = 0.1;
   const zFar = 50;
-
+  var then=0;
   function degToRad(deg) {
     return deg * Math.PI / 180;
   }
-
-  function render() {
+  var then=0;
+  requestAnimationFrame(render);
+  function render(time2) {
     gl.clearColor(0.75,0.85,0.8,1.0);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.enable(gl.DEPTH_TEST);
     gl.enable(gl.CULL_FACE);
     gl.frontFace(gl.CCW);
     gl.cullFace(gl.BACK);
-
+    time2*=0.001;
+    var delta=time2-then;
+    then=time2;
     time = time + timeInt*0.001;  // [s]
+    //console.log(time2);
     console.log(time);
 
     webglUtils.resizeCanvasToDisplaySize(gl.canvas);
@@ -303,6 +313,92 @@ async function main() {
     // calls gl.drawArrays or gl.drawElements
     webglUtils.drawBufferInfo(gl, bufferInfo_hammer);
 
+    webglUtils.setBuffersAndAttributes(gl, meshProgramInfo, bufferInfo_mole);
+    var Ry=0;
+var stop=false;
+var play=true;
+var mole_world=[1,  0,  0,   0,
+  0,  1,  0,   0,
+  0,  0,  1,   0,
+  0.32,  0,  0.6,  1];
+
+/*if(play==true){
+animate();
+} else {
+  mole_world=[1,  0,  0,   0,
+    0,  1,  0,   0,
+    0,  0,  1,   0,
+    0.32,  0.2,  0.6,  1];
+}*/
+ var Ryini=0;
+ var Ryfin=1.0;
+ var tini=0;
+ var tfin=1.0;
+//console.log(delta);
+ //tini = tini + timeInt*0.001;
+ //tfin= tfin+timeInt*0.001;
+ var one=false;
+ function upmole(){
+ Ry = Ryini + (time - tini) * (Ryfin - Ryini) / (tfin - tini);
+ //Ry=0+time*1/1
+ if(Ry>=1.0){
+  Ryini=Ryfin;
+  Ryfin=0.0;
+  tini=tfin;
+  tfin=tfin*2;
+   downmole();
+ }
+}
+function downmole(){
+  //tini=tfin;
+//  Ry = Ryini + (time - tini) * (Ryfin - Ryini) / (tfin - tini)
+Ry = Ryini + (time - tini) * (Ryfin - Ryini) / (tfin - tini);
+//Ry=-Ry+tfin;
+  if(Ry<=0){
+    Ryini=Ryfin;
+    Ryfin=1.0;
+    tini=tfin;
+    tfin=tfin*2;
+    upmole();
+  /*  Ryini=0;
+    Ryfin=1.0;*/
+    //tin=tfin;
+    /*var random1=Math.random();
+    if(random>=0.5){
+    upmole();
+    }
+    if(random>=0.5){
+      nomole();
+    }*/
+}
+};
+upmole();
+//console.log(time2);
+mole_world= utils.multiplyMatrices(mole_world, m4.translation(0,Ry,0))
+/*}else {
+    mole_world=[1,  0,  0,   0,
+      0,  1,  0,   0,
+      0,  0,  1,   0,
+      0.32,  0,  0.6,  1];
+  }
+*/
+          
+   webglUtils.setUniforms(meshProgramInfo, {
+      //u_world: m4.yRotation(time),
+      //u_world: m4.translation((cameraTarget[2] - cameraPosition[2])*end[0]/(end[2] + (cameraTarget[2] - cameraPosition[2])),(cameraTarget[2] - cameraPosition[2])*end[1]/(end[2] + (cameraTarget[2] - cameraPosition[2])), (cameraTarget[2] - cameraPosition[2])*end[2]/(end[2] + (cameraTarget[2] - cameraPosition[2]))),
+     /*u_world:[1,  0,  0,   0,
+               0,  1,  0,   0,
+               0,  0,  1,   0,
+               0.32,  1,  0.6,  1],*/
+        u_world:mole_world,
+      //u_world:[1,0,0,0,0,1,0,0,0,0,1.2,0,0.27,1,1,1],
+      //u_world: [1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1],
+       u_diffuse: [1, 0.7, 0.5, 1],
+
+    });
+    webglUtils.drawBufferInfo(gl, bufferInfo_mole);
+
+    //requestAnimationFrame(render);
   }
   setInterval(render,timeInt);
 }
