@@ -1,14 +1,44 @@
 "use strict";
 
+////
+
+var gl;
+var shaderDir;
+var model_cabinet;
+var model_hammer;
+var model_mole;
+var baseDir;
+
+var vertices_cabinet;
+var normals_cabinet;
+var indices_cabinet;
+var uv_cabinet;
+
+var vertices_hammer;
+var normals_hammer;
+var indices_hammer;
+var uv_hammer;
+
+var vertices_mole;
+var normals_mole;
+var indices_mole;
+var uv_mole;
+
+//var TextCoords;
+var positionAttributeLocation;
+var normalsAttributeLocation;
+var matrixLocation;
+var nMatrixLocation;
+var diffColorLocation;
+var lightDirLocation;
+var lightColLocation;
+var perspectiveMatrix;
+var viewMatrix;
+///
+
 var canvas = document.querySelector("#canvas");
-var canvasPos = getPosition(canvas);
 
-var mouse_x = 0;
-var mouse_y = 0;
-var clipX;
-var clipY;
 var keyCode;
-
 var time = 0;
 var timeInt = 1; //[ms]
 var c;
@@ -37,12 +67,6 @@ document.getElementById("sl_phi").oninput = function(){
   document.getElementById("phi_value").innerHTML = this.value;
 }
 
-document.onmousemove = function(e) {
-  mouse_x = e.clientX - canvasPos.x;
-  mouse_y = e.clientY - canvasPos.y;
-  clipX = (mouse_x / canvas.width  *  2 - 1);
-  clipY = (mouse_y / canvas.height * -2 + 1);
-}
 //key codes:
 //A -> 65
 //S -> 83
@@ -58,28 +82,6 @@ document.onkeydown = function(key){
     keyCode = key.keyCode;
   }
 }
-/*
-canvas.addEventListener('mousedown', clicked, false);
-function clicked(e){
-  switch (e.button) {
-    case 0:
-      // left mouse button
-      leftClick();
-      break;
-    case 1:
-      // middle mouse button
-      break;
-    default:
-      // 2 === right mouse button
-  }
-};
-
-function leftClick(){
-  boolClick = 1;
-  c = 0;
-}
-*/
-var temp = 1;
 
 function parseOBJ(text) {
   // because indices are base 1 let's just fill in the 0th data
@@ -185,39 +187,8 @@ async function main() {
   gl.enable(gl.CULL_FACE);
   gl.frontFace(gl.CCW);
   gl.cullFace(gl.BACK);
-
-  const vs = `
-  attribute vec4 a_position;
-  attribute vec3 a_normal;
-
-  uniform mat4 u_projection;
-  uniform mat4 u_view;
-  uniform mat4 u_world;
-
-  varying vec3 v_normal;
-
-  void main() {
-      gl_Position = u_projection * u_view * u_world * a_position;
-      v_normal = mat3(u_world) * a_normal;
-  }
-  `;
-
-  const fs = `
-  precision mediump float;
-
-  varying vec3 v_normal;
-
-  uniform vec4 u_diffuse;
-  uniform vec3 u_lightDirection;
-
-  void main () {
-      vec3 normal = normalize(v_normal);
-      float fakeLight = dot(u_lightDirection, normal) * .5 + .5;
-      gl_FragColor = vec4(u_diffuse.rgb * fakeLight, u_diffuse.a);
-  }
-  `;
-
-
+  //-----------------------------------
+  /*
   // compiles and links the shaders, looks up attribute and uniform locations
   const meshProgramInfo = webglUtils.createProgramInfo(gl, [vs, fs]);
 
@@ -250,7 +221,150 @@ async function main() {
   const bufferInfo_cabinet = webglUtils.createBufferInfoFromArrays(gl, data_cabinet);
   const bufferInfo_hammer = webglUtils.createBufferInfoFromArrays(gl, data_hammer);
   const bufferInfo_mole = webglUtils.createBufferInfoFromArrays(gl, data_mole);
+  */
+//-----------------------------------
 
+  var path = window.location.pathname;
+  var page = path.split("/").pop();
+  baseDir = window.location.href.replace(page, '');
+  shaderDir = baseDir+"shaders/";
+
+  await utils.loadFiles([shaderDir + 'vs.glsl', shaderDir + 'fs.glsl'], function (shaderText) {
+    var vertexShader = utils.createShader(gl, gl.VERTEX_SHADER, shaderText[0]);
+    console.log(vertexShader);
+    var fragmentShader = utils.createShader(gl, gl.FRAGMENT_SHADER, shaderText[1]);
+    program = utils.createProgram(gl, vertexShader, fragmentShader);
+
+  });
+
+  gl.useProgram(program);
+
+  model_cabinet = new OBJ.Mesh(worldObjStr_cabinet);
+  model_hammer = new OBJ.Mesh(worldObjStr_hammer);
+  model_mole = new OBJ.Mesh(worldObjStr_mole);
+
+  vertices_cabinet= model_cabinet.vertices;
+  normals_cabinet = model_cabinet.vertexNormals;
+  indices_cabinet = model_cabinet.indices;
+  uv_cabinet=model_cabinet.textures;
+
+  vertices_hammer= model_hammer.vertices;
+  normals_hammer = model_hammer.vertexNormals;
+  indices_hammer = model_hammer.indices;
+  uv_hammer=model_hammer.textures;
+
+  vertices_mole= model_mole.vertices;
+  normals_mole = model_mole.vertexNormals;
+  indices_mole = model_mole.indices;
+  uv_mole=model_mole.textures;
+
+  positionAttributeLocation = gl.getAttribLocation(program, "a_position");  
+  normalsAttributeLocation = gl.getAttribLocation(program, "a_normal");
+  uvAttributeLocation=gl.getAttribLocation(program,"a_uv");
+  textLocation=gl.getUniformLocation(program, "u_texture");
+  matrixLocation = gl.getUniformLocation(program, "matrix");  
+
+
+  vao_cabinet = gl.createVertexArray();
+  gl.bindVertexArray(vao_cabinet);
+
+  var positionBuffer_cabinet = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer_cabinet);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices_cabinet), gl.STATIC_DRAW);
+  gl.enableVertexAttribArray(positionAttributeLocation);
+  gl.vertexAttribPointer(positionAttributeLocation, 3, gl.FLOAT, false, 0, 0);
+
+  var normalsBuffer_cabinet = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, normalsBuffer_cabinet);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(normals_cabinet), gl.STATIC_DRAW);
+  gl.enableVertexAttribArray(normalsAttributeLocation);
+  gl.vertexAttribPointer(normalsAttributeLocation, 3, gl.FLOAT, false, 0, 0);
+  
+  var uvBuffer_cabinet = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, uvBuffer_cabinet);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(uv_cabinet), gl.STATIC_DRAW);
+  gl.enableVertexAttribArray(uvAttributeLocation);
+  gl.vertexAttribPointer(uvAttributeLocation, 2, gl.FLOAT, false, 0, 0);
+
+  var indexBuffer_cabinet = gl.createBuffer();
+  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer_cabinet);
+  gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices_cabinet), gl.STATIC_DRAW);
+
+
+  vao_hammer = gl.createVertexArray();
+  gl.bindVertexArray(vao_hammer);
+
+  var positionBuffer_hammer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer_hammer);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices_hammer), gl.STATIC_DRAW);
+  gl.enableVertexAttribArray(positionAttributeLocation);
+  gl.vertexAttribPointer(positionAttributeLocation, 3, gl.FLOAT, false, 0, 0);
+
+  var normalsBuffer_hammer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, normalsBuffer_hammer);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(normals_hammer), gl.STATIC_DRAW);
+  gl.enableVertexAttribArray(normalsAttributeLocation);
+  gl.vertexAttribPointer(normalsAttributeLocation, 3, gl.FLOAT, false, 0, 0);
+  
+  var uvBuffer_hammer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, uvBuffer_hammer);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(uv_hammer), gl.STATIC_DRAW);
+  gl.enableVertexAttribArray(uvAttributeLocation);
+  gl.vertexAttribPointer(uvAttributeLocation, 2, gl.FLOAT, false, 0, 0);
+
+  var indexBuffer_hammer = gl.createBuffer();
+  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer_hammer);
+  gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices_hammer), gl.STATIC_DRAW);
+
+
+  vao_mole = gl.createVertexArray();
+  gl.bindVertexArray(vao_mole);
+
+  var positionBuffer_mole = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer_mole);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices_mole), gl.STATIC_DRAW);
+  gl.enableVertexAttribArray(positionAttributeLocation);
+  gl.vertexAttribPointer(positionAttributeLocation, 3, gl.FLOAT, false, 0, 0);
+
+  var normalsBuffer_mole = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, normalsBuffer_mole);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(normals_mole), gl.STATIC_DRAW);
+  gl.enableVertexAttribArray(normalsAttributeLocation);
+  gl.vertexAttribPointer(normalsAttributeLocation, 3, gl.FLOAT, false, 0, 0);
+  
+  var uvBuffer_mole = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, uvBuffer_mole);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(uv_mole), gl.STATIC_DRAW);
+  gl.enableVertexAttribArray(uvAttributeLocation);
+  gl.vertexAttribPointer(uvAttributeLocation, 2, gl.FLOAT, false, 0, 0);
+
+  var indexBuffer_mole = gl.createBuffer();
+  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer_mole);
+  gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices_mole), gl.STATIC_DRAW);
+
+
+  // Create a texture.
+  var texture = gl.createTexture();
+  // use texture unit 0
+  gl.activeTexture(gl.TEXTURE0);
+  // bind to the TEXTURE_2D bind point of texture unit 0
+  gl.bindTexture(gl.TEXTURE_2D, texture);
+
+  // Asynchronously load an image
+  var image = new Image();
+  image.src = baseDir + "Mole.png";
+  image.onload = function() {
+  //Make sure this is the active one
+  gl.activeTexture(gl.TEXTURE0);
+  gl.bindTexture(gl.TEXTURE_2D, texture);
+  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+  gl.generateMipmap(gl.TEXTURE_2D);
+  };
+
+  ///////
   const cameraTarget = [0, 0, 0];
   var cameraPosition = [0, 3, 3];
   const zNear = 0.1;
@@ -305,35 +419,24 @@ async function main() {
     const viewProjection = m4.multiply(projection, view);
     const invMat = m4.inverse(viewProjection);
 
-    const sharedUniforms = {
-    u_lightDirection: m4.normalize([-1, 3, 5]),
-    u_view: view,
-    u_projection: projection,
-    };
 
-    gl.useProgram(meshProgramInfo.program);
-
-    // calls gl.uniform
-    webglUtils.setUniforms(meshProgramInfo, sharedUniforms);
-    
     //CABINET
-    // calls gl.bindBuffer, gl.enableVertexAttribArray, gl.vertexAttribPointer
-    webglUtils.setBuffersAndAttributes(gl, meshProgramInfo, bufferInfo_cabinet);
+    worldMatrix = m4.identity();
+    viewWorldMatrix = utils.multiplyMatrices(view, worldMatrix);
+    projectionMatrix = utils.multiplyMatrices(projection, viewWorldMatrix);
 
-    // calls gl.uniform
-    webglUtils.setUniforms(meshProgramInfo, {
-    //u_world: m4.yRotation(time),
-    //u_world: m4.translation(mouse_x,mouse_y,0),
-    u_world: m4.identity(),
-    u_diffuse: [1, 0.7, 0.5, 1],
-    });
+    gl.uniformMatrix4fv(matrixLocation, gl.FALSE, utils.transposeMatrix(projectionMatrix));
 
-    // calls gl.drawArrays or gl.drawElements
-    webglUtils.drawBufferInfo(gl, bufferInfo_cabinet);
-    
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+    gl.uniform1i(textLocation, 0);
+
+    gl.bindVertexArray(vao);
+
+    gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_SHORT, 0);
+
     //HAMMER
-    //const end  = m4.transformPoint(invMat, [clipX, clipY,  0.92]);
-
+/*
     if(boolClick != 0){
       if(keyCode == 65){ //A
         if(c*Math.PI/2 < Math.PI/2){
@@ -429,28 +532,10 @@ async function main() {
       // calls gl.drawArrays or gl.drawElements
       webglUtils.drawBufferInfo(gl, bufferInfo_mole);
     }
-
+    */
 
   }
   setInterval(render,timeInt);
 }
 
 main();
-
-
-//FUNCTIONS
-
-function getPosition(el) {
-    var xPosition = 0;
-    var yPosition = 0;
-   
-    while (el) {
-      xPosition += (el.offsetLeft - el.scrollLeft + el.clientLeft);
-      yPosition += (el.offsetTop - el.scrollTop + el.clientTop);
-      el = el.offsetParent;
-    }
-    return {
-      x: xPosition,
-      y: yPosition
-    };
-  }  
