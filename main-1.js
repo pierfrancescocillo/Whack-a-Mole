@@ -7,22 +7,19 @@ var mouse_x = 0;
 var mouse_y = 0;
 var clipX;
 var clipY;
+var keyCode;
 
 var time = 0;
-//var time2=0;
-var timeInt = 5; //[ms]
+var timeInt = 1; //[ms]
 var c;
+var m = [0,0,0,0,0];
+const hamm_initPos = [1.5,1.5,1.5];
 var hamm_world;
+var mole_world;
 
 //booleani utili
 var boolClick = 0;
-
-document.onmousemove = function(e) {
-  mouse_x = e.clientX - canvasPos.x;
-  mouse_y = e.clientY - canvasPos.y;
-  clipX = (mouse_x / canvas.width  *  2 - 1);
-  clipY = (mouse_y / canvas.height * -2 + 1);
-}
+var boolTalpa = [0,0,0,0,0];
 
 //Assigning value to the sliders------------------------------------------------------------
 document.getElementById("rho_value").innerHTML = document.getElementById("sl_rho").value;
@@ -40,6 +37,28 @@ document.getElementById("sl_phi").oninput = function(){
   document.getElementById("phi_value").innerHTML = this.value;
 }
 
+document.onmousemove = function(e) {
+  mouse_x = e.clientX - canvasPos.x;
+  mouse_y = e.clientY - canvasPos.y;
+  clipX = (mouse_x / canvas.width  *  2 - 1);
+  clipY = (mouse_y / canvas.height * -2 + 1);
+}
+//key codes:
+//A -> 65
+//S -> 83
+//D -> 68
+//Z -> 90
+//X -> 88
+document.onkeydown = function(key){
+  console.log('scià');
+  if(key.keyCode == 65 || key.keyCode == 83 || key.keyCode == 68 || key.keyCode == 90 || key.keyCode == 88){
+    console.log('scià');
+    boolClick = 1;
+    c = 0;
+    keyCode = key.keyCode;
+  }
+}
+/*
 canvas.addEventListener('mousedown', clicked, false);
 function clicked(e){
   switch (e.button) {
@@ -51,7 +70,7 @@ function clicked(e){
       // middle mouse button
       break;
     default:
-      console.log('You right clicked!') ; // 2 === right mouse button
+      // 2 === right mouse button
   }
 };
 
@@ -59,7 +78,7 @@ function leftClick(){
   boolClick = 1;
   c = 0;
 }
-
+*/
 var temp = 1;
 
 function parseOBJ(text) {
@@ -231,18 +250,25 @@ async function main() {
   const bufferInfo_cabinet = webglUtils.createBufferInfoFromArrays(gl, data_cabinet);
   const bufferInfo_hammer = webglUtils.createBufferInfoFromArrays(gl, data_hammer);
   const bufferInfo_mole = webglUtils.createBufferInfoFromArrays(gl, data_mole);
-  
+
   const cameraTarget = [0, 0, 0];
   var cameraPosition = [0, 3, 3];
   const zNear = 0.1;
   const zFar = 50;
-  var then=0;
+
+  const molePos = [
+    [-0.63,0.4,0.21],
+    [0,0.4,0.21],
+    [0.63,0.4,0.21],
+    [-0.3,0.4,0.65],
+    [0.3,0.4,0.65]
+  ];
+
   function degToRad(deg) {
     return deg * Math.PI / 180;
   }
-  var then=0;
-  
-  function render(time2) {
+
+  function render() {
 
     cameraPosition = [
       cameraTarget[0] + document.getElementById("sl_rho").value * Math.cos(degToRad(document.getElementById("sl_theta").value)) * Math.sin(degToRad(document.getElementById("sl_phi").value)),
@@ -256,12 +282,9 @@ async function main() {
     gl.enable(gl.CULL_FACE);
     gl.frontFace(gl.CCW);
     gl.cullFace(gl.BACK);
-    time2*=0.001;
-    var delta=time2-then;
-    then=time2;
+
     time = time + timeInt*0.001;  // [s]
-    //console.log(time2);
-    console.log(time);
+    //console.log(time);
 
     webglUtils.resizeCanvasToDisplaySize(gl.canvas);
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
@@ -293,6 +316,7 @@ async function main() {
     // calls gl.uniform
     webglUtils.setUniforms(meshProgramInfo, sharedUniforms);
     
+    //CABINET
     // calls gl.bindBuffer, gl.enableVertexAttribArray, gl.vertexAttribPointer
     webglUtils.setBuffersAndAttributes(gl, meshProgramInfo, bufferInfo_cabinet);
 
@@ -307,12 +331,50 @@ async function main() {
     // calls gl.drawArrays or gl.drawElements
     webglUtils.drawBufferInfo(gl, bufferInfo_cabinet);
     
-    const end  = m4.transformPoint(invMat, [clipX, clipY,  0.92]);
+    //HAMMER
+    //const end  = m4.transformPoint(invMat, [clipX, clipY,  0.92]);
+
     if(boolClick != 0){
-      if(c*Math.PI/2 < Math.PI/2){
-        hamm_world = utils.multiplyMatrices(utils.multiplyMatrices(m4.translation(0,1,0), m4.xRotation(-c*Math.PI/2)), m4.translation(0,-1,0));
-      } else {
-        hamm_world = utils.multiplyMatrices(utils.multiplyMatrices(utils.multiplyMatrices(m4.translation(0,1,0), m4.xRotation(c*Math.PI/2)), m4.xRotation(Math.PI)),m4.translation(0,-1,0));
+      if(keyCode == 65){ //A
+        if(c*Math.PI/2 < Math.PI/2){
+          //hamm_world = utils.multiplyMatrices(utils.multiplyMatrices(m4.translation(0,1,0), m4.xRotation(-c*Math.PI/2)), m4.translation(0,-1,0));
+          hamm_world = utils.multiplyMatrices(m4.axisRotation([-(molePos[0][2] - hamm_initPos[2]),0,molePos[0][0] - hamm_initPos[0]],-c*Math.PI/2),m4.translation((molePos[0][0] - hamm_initPos[0])*c,(molePos[0][1] - hamm_initPos[1] + 0.8)*c,(molePos[0][2] - hamm_initPos[2])*c));
+        } else {
+          //hamm_world = utils.multiplyMatrices(utils.multiplyMatrices(utils.multiplyMatrices(m4.translation(0,1,0), m4.xRotation(c*Math.PI/2)), m4.xRotation(Math.PI)),m4.translation(0,-1,0));
+          hamm_world = utils.multiplyMatrices(utils.multiplyMatrices(utils.multiplyMatrices(m4.axisRotation([-(molePos[0][2] - hamm_initPos[2]),0,molePos[0][0] - hamm_initPos[0]],c*Math.PI/2), m4.axisRotation([-(molePos[0][2] - hamm_initPos[2]),0,molePos[0][0] - hamm_initPos[0]],Math.PI)),m4.translation((molePos[0][0] - hamm_initPos[0])*-c/2,(molePos[0][1] - hamm_initPos[1] + 0.8)*-c/2,(molePos[0][2] - hamm_initPos[2])*-c/2)),m4.translation((molePos[0][0] - hamm_initPos[0]),(molePos[0][1] - hamm_initPos[1] + 0.8),(molePos[0][2] - hamm_initPos[2])));
+        }
+      } else if(keyCode == 83){ //S
+        if(c*Math.PI/2 < Math.PI/2){
+          //hamm_world = utils.multiplyMatrices(utils.multiplyMatrices(m4.translation(0,1,0), m4.xRotation(-c*Math.PI/2)), m4.translation(0,-1,0));
+          hamm_world = utils.multiplyMatrices(m4.axisRotation([-(molePos[1][2] - hamm_initPos[2]),0,molePos[1][0] - hamm_initPos[0]],-c*Math.PI/2),m4.translation((molePos[1][0] - hamm_initPos[0])*c,(molePos[1][1] - hamm_initPos[1] + 0.8)*c,(molePos[1][2] - hamm_initPos[2])*c));
+        } else {
+          //hamm_world = utils.multiplyMatrices(utils.multiplyMatrices(utils.multiplyMatrices(m4.translation(0,1,0), m4.xRotation(c*Math.PI/2)), m4.xRotation(Math.PI)),m4.translation(0,-1,0));
+          hamm_world = utils.multiplyMatrices(utils.multiplyMatrices(utils.multiplyMatrices(m4.axisRotation([-(molePos[1][2] - hamm_initPos[2]),0,molePos[1][0] - hamm_initPos[0]],c*Math.PI/2), m4.axisRotation([-(molePos[1][2] - hamm_initPos[2]),0,molePos[1][0] - hamm_initPos[0]],Math.PI)),m4.translation((molePos[1][0] - hamm_initPos[0])*-c/2,(molePos[1][1] - hamm_initPos[1] + 0.8)*-c/2,(molePos[1][2] - hamm_initPos[2])*-c/2)),m4.translation((molePos[1][0] - hamm_initPos[0]),(molePos[1][1] - hamm_initPos[1] + 0.8),(molePos[1][2] - hamm_initPos[2])));
+        }
+      } else if(keyCode == 68 ){ //D
+        if(c*Math.PI/2 < Math.PI/2){
+          //hamm_world = utils.multiplyMatrices(utils.multiplyMatrices(m4.translation(0,1,0), m4.xRotation(-c*Math.PI/2)), m4.translation(0,-1,0));
+          hamm_world = utils.multiplyMatrices(m4.axisRotation([-(molePos[2][2] - hamm_initPos[2]),0,molePos[2][0] - hamm_initPos[0]],-c*Math.PI/2),m4.translation((molePos[2][0] - hamm_initPos[0])*c,(molePos[2][1] - hamm_initPos[1] + 0.8)*c,(molePos[2][2] - hamm_initPos[2])*c));
+        } else {
+          //hamm_world = utils.multiplyMatrices(utils.multiplyMatrices(utils.multiplyMatrices(m4.translation(0,1,0), m4.xRotation(c*Math.PI/2)), m4.xRotation(Math.PI)),m4.translation(0,-1,0));
+          hamm_world = utils.multiplyMatrices(utils.multiplyMatrices(utils.multiplyMatrices(m4.axisRotation([-(molePos[2][2] - hamm_initPos[2]),0,molePos[2][0] - hamm_initPos[0]],c*Math.PI/2), m4.axisRotation([-(molePos[2][2] - hamm_initPos[2]),0,molePos[2][0] - hamm_initPos[0]],Math.PI)),m4.translation((molePos[2][0] - hamm_initPos[0])*-c/2,(molePos[2][1] - hamm_initPos[1] + 0.8)*-c/2,(molePos[2][2] - hamm_initPos[2])*-c/2)),m4.translation((molePos[2][0] - hamm_initPos[0]),(molePos[2][1] - hamm_initPos[1] + 0.8),(molePos[2][2] - hamm_initPos[2])));
+        }
+      } else if(keyCode == 90){ //Z
+        if(c*Math.PI/2 < Math.PI/2){
+          //hamm_world = utils.multiplyMatrices(utils.multiplyMatrices(m4.translation(0,1,0), m4.xRotation(-c*Math.PI/2)), m4.translation(0,-1,0));
+          hamm_world = utils.multiplyMatrices(m4.axisRotation([-(molePos[3][2] - hamm_initPos[2]),0,molePos[3][0] - hamm_initPos[0]],-c*Math.PI/2),m4.translation((molePos[3][0] - hamm_initPos[0])*c,(molePos[3][1] - hamm_initPos[1] + 0.8)*c,(molePos[3][2] - hamm_initPos[2])*c));
+        } else {
+          //hamm_world = utils.multiplyMatrices(utils.multiplyMatrices(utils.multiplyMatrices(m4.translation(0,1,0), m4.xRotation(c*Math.PI/2)), m4.xRotation(Math.PI)),m4.translation(0,-1,0));
+          hamm_world = utils.multiplyMatrices(utils.multiplyMatrices(utils.multiplyMatrices(m4.axisRotation([-(molePos[3][2] - hamm_initPos[2]),0,molePos[3][0] - hamm_initPos[0]],c*Math.PI/2), m4.axisRotation([-(molePos[3][2] - hamm_initPos[2]),0,molePos[3][0] - hamm_initPos[0]],Math.PI)),m4.translation((molePos[3][0] - hamm_initPos[0])*-c/2,(molePos[3][1] - hamm_initPos[1] + 0.8)*-c/2,(molePos[3][2] - hamm_initPos[2])*-c/2)),m4.translation((molePos[3][0] - hamm_initPos[0]),(molePos[3][1] - hamm_initPos[1] + 0.8),(molePos[3][2] - hamm_initPos[2])));
+        }
+      } else if(keyCode == 88){ //X
+        if(c*Math.PI/2 < Math.PI/2){
+          //hamm_world = utils.multiplyMatrices(utils.multiplyMatrices(m4.translation(0,1,0), m4.xRotation(-c*Math.PI/2)), m4.translation(0,-1,0));
+          hamm_world = utils.multiplyMatrices(m4.axisRotation([-(molePos[4][2] - hamm_initPos[2]),0,molePos[4][0] - hamm_initPos[0]],-c*Math.PI/2),m4.translation((molePos[4][0] - hamm_initPos[0])*c,(molePos[4][1] - hamm_initPos[1] + 0.8)*c,(molePos[4][2] - hamm_initPos[2])*c));
+        } else {
+          //hamm_world = utils.multiplyMatrices(utils.multiplyMatrices(utils.multiplyMatrices(m4.translation(0,1,0), m4.xRotation(c*Math.PI/2)), m4.xRotation(Math.PI)),m4.translation(0,-1,0));
+          hamm_world = utils.multiplyMatrices(utils.multiplyMatrices(utils.multiplyMatrices(m4.axisRotation([-(molePos[4][2] - hamm_initPos[2]),0,molePos[4][0] - hamm_initPos[0]],c*Math.PI/2), m4.axisRotation([-(molePos[4][2] - hamm_initPos[2]),0,molePos[4][0] - hamm_initPos[0]],Math.PI)),m4.translation((molePos[4][0] - hamm_initPos[0])*-c/2,(molePos[4][1] - hamm_initPos[1] + 0.8)*-c/2,(molePos[4][2] - hamm_initPos[2])*-c/2)),m4.translation((molePos[4][0] - hamm_initPos[0]),(molePos[4][1] - hamm_initPos[1] + 0.8),(molePos[4][2] - hamm_initPos[2])));
+        }
       }
       c = c + time*0.001;
       if(c*Math.PI/2 > Math.PI){
@@ -322,106 +384,53 @@ async function main() {
       hamm_world = m4.identity();
     }
 
+    // calls gl.bindBuffer, gl.enableVertexAttribArray, gl.vertexAttribPointer
+    webglUtils.setBuffersAndAttributes(gl, meshProgramInfo, bufferInfo_hammer);
+    // calls gl.uniform
+    webglUtils.setUniforms(meshProgramInfo, {
+    //u_world: m4.yRotation(time),
+    //u_world: m4.translation(end[0],end[1],end[2]),
+    //u_world: [1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1],
+    u_world: utils.multiplyMatrices(hamm_world, m4.translation(hamm_initPos[0],hamm_initPos[1],hamm_initPos[2])),
+    u_diffuse: [1, 0.7, 0.5, 1],
+    });
+
+    // calls gl.drawArrays or gl.drawElements
+    webglUtils.drawBufferInfo(gl, bufferInfo_hammer);
+
+    //MOLE
+    for(let i = 0; i<5; i++){
+      if(Math.random()*20000<10){
+        boolTalpa[i] = 1;
+      }
+  
+      if(boolTalpa[i]){
+        if(m[i]*0.4<0.4){
+          mole_world = m4.translation(0,m[i]*0.4,0);
+        } else {
+          mole_world = utils.multiplyMatrices(m4.translation(0,-m[i]*0.4,0),m4.translation(0,0.8,0));
+        }
+        m[i] = m[i] + time*0.001;
+        if(m[i]*0.4 > 0.8){
+          boolTalpa[i] = 0;
+          m[i]=0;
+        }
+      } else {
+        mole_world = m4.identity();
+      }
       // calls gl.bindBuffer, gl.enableVertexAttribArray, gl.vertexAttribPointer
-      webglUtils.setBuffersAndAttributes(gl, meshProgramInfo, bufferInfo_hammer);
+      webglUtils.setBuffersAndAttributes(gl, meshProgramInfo, bufferInfo_mole);
       // calls gl.uniform
       webglUtils.setUniforms(meshProgramInfo, {
-      //u_world: m4.yRotation(time),
-      //u_world: m4.translation(end[0],end[1],end[2]),
-      //u_world: [1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1],
-      u_world: utils.multiplyMatrices(hamm_world, m4.translation(end[0],end[1],end[2])),
+      u_world: utils.multiplyMatrices(mole_world,m4.translation(molePos[i][0],molePos[i][1],molePos[i][2])),
+      //u_world: m4.identity(),
       u_diffuse: [1, 0.7, 0.5, 1],
       });
-
       // calls gl.drawArrays or gl.drawElements
-      webglUtils.drawBufferInfo(gl, bufferInfo_hammer);
-
-      webglUtils.setBuffersAndAttributes(gl, meshProgramInfo, bufferInfo_mole);
-      var Ry=0;
-      var stop=false;
-      var play=true;
-      var mole_world=[1,  0,  0,   0,
-        0,  1,  0,   0,
-        0,  0,  1,   0,
-        0.32,  0,  0.6,  1];
-
-      /*if(play==true){
-      animate();
-      } else {
-        mole_world=[1,  0,  0,   0,
-          0,  1,  0,   0,
-          0,  0,  1,   0,
-          0.32,  0.2,  0.6,  1];
-      }*/
-      var Ryini=0;
-      var Ryfin=1.0;
-      var tini=0;
-      var tfin=1.0;
-      //console.log(delta);
-      //tini = tini + timeInt*0.001;
-      //tfin= tfin+timeInt*0.001;
-      var one=false;
-      function upmole(){
-      Ry = Ryini + (time - tini) * (Ryfin - Ryini) / (tfin - tini);
-      //Ry=0+time*1/1
-      if(Ry>=1.0){
-        Ryini=Ryfin;
-        Ryfin=0.0;
-        tini=tfin;
-        tfin=tfin*2;
-        downmole();
-      }
+      webglUtils.drawBufferInfo(gl, bufferInfo_mole);
     }
-    function downmole(){
-      //tini=tfin;
-      //  Ry = Ryini + (time - tini) * (Ryfin - Ryini) / (tfin - tini)
-      Ry = Ryini + (time - tini) * (Ryfin - Ryini) / (tfin - tini);
-      //Ry=-Ry+tfin;
-      if(Ry<=0){
-        Ryini=Ryfin;
-        Ryfin=1.0;
-        tini=tfin;
-        tfin=tfin*2;
-        upmole();
-        /*  Ryini=0;
-        Ryfin=1.0;*/
-        //tin=tfin;
-        /*var random1=Math.random();
-        if(random>=0.5){
-        upmole();
-        }
-        if(random>=0.5){
-          nomole();
-        }*/
-      }
-    };
-    upmole();
-    //console.log(time2);
-    mole_world= utils.multiplyMatrices(mole_world, m4.translation(0,Ry,0))
-    /*}else {
-      mole_world=[1,  0,  0,   0,
-        0,  1,  0,   0,
-        0,  0,  1,   0,
-        0.32,  0,  0.6,  1];
-    }
-    */
-          
-   webglUtils.setUniforms(meshProgramInfo, {
-      //u_world: m4.yRotation(time),
-      //u_world: m4.translation((cameraTarget[2] - cameraPosition[2])*end[0]/(end[2] + (cameraTarget[2] - cameraPosition[2])),(cameraTarget[2] - cameraPosition[2])*end[1]/(end[2] + (cameraTarget[2] - cameraPosition[2])), (cameraTarget[2] - cameraPosition[2])*end[2]/(end[2] + (cameraTarget[2] - cameraPosition[2]))),
-     /*u_world:[1,  0,  0,   0,
-               0,  1,  0,   0,
-               0,  0,  1,   0,
-               0.32,  1,  0.6,  1],*/
-        u_world:mole_world,
-      //u_world:[1,0,0,0,0,1,0,0,0,0,1.2,0,0.27,1,1,1],
-      //u_world: [1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1],
-       u_diffuse: [1, 0.7, 0.5, 1],
 
-    });
-    webglUtils.drawBufferInfo(gl, bufferInfo_mole);
 
-    //requestAnimationFrame(render);
   }
   setInterval(render,timeInt);
 }
