@@ -44,6 +44,12 @@ var lightColLocation;
 //altre variabili
 var keyCode;
 
+const cameraTarget = [0, 0, 0];
+var cameraPosition = [0, 10, 10];
+const zNear = 0.1;
+const zFar = 100;
+const up = [0,1,0];
+
 var time = 0;
 var timeInt = 5; //[ms]
 var c;
@@ -144,16 +150,6 @@ async function main() {
       return;
   }
 
-  
-  /*
-  await utils.loadFiles([shaderDir + 'vs.glsl', shaderDir + 'fs.glsl'], function (shaderText) {
-    var vertexShader = utils.createShader(gl, gl.VERTEX_SHADER, shaderText[0]);
-    var fragmentShader = utils.createShader(gl, gl.FRAGMENT_SHADER, shaderText[1]);
-    program = createProgram(gl, vertexShader, fragmentShader);
-
-  });
-  */
-
   var vertexShader = utils.createShader(gl, gl.VERTEX_SHADER, vs_text);
   var fragmentShader = utils.createShader(gl, gl.FRAGMENT_SHADER, fs_text);
   program = utils.createProgram(gl, vertexShader, fragmentShader);
@@ -174,11 +170,8 @@ async function main() {
   gl.enable(gl.CULL_FACE);
   gl.frontFace(gl.CCW);
   gl.cullFace(gl.BACK);
-
-  utils.resizeCanvasToDisplaySize(gl.canvas);
   gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
-  gl.enable(gl.DEPTH_TEST);
-  gl.enable(gl.CULL_FACE);
+
 
   positionAttributeLocation = gl.getAttribLocation(program, "a_position");  
   normalsAttributeLocation = gl.getAttribLocation(program, "a_normal");
@@ -237,10 +230,7 @@ async function main() {
   gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices_hammer), gl.STATIC_DRAW); 
   
 
-  const cameraTarget = [0, 0, 0];
-  var cameraPosition = [0, 10, 10];
-  const zNear = 0.1;
-  const zFar = 100;
+
 
   // Create a texture.
   var texture = gl.createTexture();
@@ -279,13 +269,13 @@ async function main() {
     gl.frontFace(gl.CCW);
     gl.cullFace(gl.BACK);
 
-    /*
+    
     cameraPosition = [
       cameraTarget[0] + document.getElementById("sl_rho").value * Math.cos(degToRad(document.getElementById("sl_theta").value)) * Math.sin(degToRad(document.getElementById("sl_phi").value)),
       cameraTarget[1] + document.getElementById("sl_rho").value * Math.sin(degToRad(document.getElementById("sl_theta").value)),
       cameraTarget[2] + document.getElementById("sl_rho").value * Math.cos(degToRad(document.getElementById("sl_theta").value)) * Math.cos(degToRad(document.getElementById("sl_phi").value))
     ];
-    */
+
     const fieldOfViewDeg = 60;
     const fieldOfViewRadians = degToRad(fieldOfViewDeg);
     const aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
@@ -302,10 +292,14 @@ async function main() {
     const invMat = m4.inverse(viewProjection);
 
     perspectiveMatrix = utils.MakePerspective(fieldOfViewDeg, aspect, zFar, zNear);
-    viewMatrix = utils.MakeView(cameraPosition[0]-cameraTarget[0],cameraPosition[1]-cameraTarget[1],cameraPosition[2]-cameraTarget[2],-30,0),
+    //viewMatrix = utils.MakeView(cameraPosition[0],cameraPosition[1],cameraPosition[2],-30,0);
+    viewMatrix = utils.MakeView(cameraPosition[0],cameraPosition[1],cameraPosition[2],-document.getElementById("sl_theta").value,-document.getElementById("sl_phi").value),
+    //viewMatrix = MvMatrix(cameraPosition,cameraTarget,up);
+    //viewMatrix = m4toUsual(view);
 
     //DRAW CABINET
     worldMatrix_cabinet = utils.identityMatrix();
+    //worldMatrix_cabinet = MakeRotateArbMatrix(time,[1,0,0]);
     viewWorldMatrix_cabinet = utils.multiplyMatrices(viewMatrix, worldMatrix_cabinet);
     projectionMatrix_cabinet = utils.multiplyMatrices(perspectiveMatrix, viewWorldMatrix_cabinet);
 
@@ -323,43 +317,39 @@ async function main() {
     if(boolClick != 0){
       if(keyCode == 65){ //A
         if(c*Math.PI/2 < Math.PI/2){
-          //hamm_world = utils.multiplyMatrices(utils.multiplyMatrices(m4.translation(0,1,0), m4.xRotation(-c*Math.PI/2)), m4.translation(0,-1,0));
-          hamm_world = utils.multiplyMatrices(m4.axisRotation([-(molePos[0][2] - hamm_initPos[2]),0,molePos[0][0] - hamm_initPos[0]],-c*Math.PI/2),m4.translation((molePos[0][0] - hamm_initPos[0])*c,(molePos[0][1] - hamm_initPos[1] + 0.8)*c,(molePos[0][2] - hamm_initPos[2])*c));
-          console.log(hamm_world);
+          hamm_world = utils.multiplyMatrices(utils.MakeTranslateMatrix((molePos[0][0] - hamm_initPos[0])*c,(molePos[0][1] - hamm_initPos[1] + 0.8)*c,(molePos[0][2] - hamm_initPos[2])*c) ,utils.multiplyMatrices(utils.multiplyMatrices(utils.MakeTranslateMatrix(hamm_initPos[0], hamm_initPos[1], hamm_initPos[2]), MakeRotateArbMatrix([(molePos[0][0] - hamm_initPos[2]),0,molePos[0][2] - hamm_initPos[0]],-c*Math.PI/2)), utils.MakeTranslateMatrix(-hamm_initPos[0], -hamm_initPos[1], -hamm_initPos[2])));
         } else {
           //hamm_world = utils.multiplyMatrices(utils.multiplyMatrices(utils.multiplyMatrices(m4.translation(0,1,0), m4.xRotation(c*Math.PI/2)), m4.xRotation(Math.PI)),m4.translation(0,-1,0));
-          hamm_world = utils.multiplyMatrices(utils.multiplyMatrices(utils.multiplyMatrices(m4.axisRotation([-(molePos[0][2] - hamm_initPos[2]),0,molePos[0][0] - hamm_initPos[0]],c*Math.PI/2), m4.axisRotation([-(molePos[0][2] - hamm_initPos[2]),0,molePos[0][0] - hamm_initPos[0]],Math.PI)),m4.translation((molePos[0][0] - hamm_initPos[0])*-c/2,(molePos[0][1] - hamm_initPos[1] + 0.8)*-c/2,(molePos[0][2] - hamm_initPos[2])*-c/2)),m4.translation((molePos[0][0] - hamm_initPos[0]),(molePos[0][1] - hamm_initPos[1] + 0.8),(molePos[0][2] - hamm_initPos[2])));
+          hamm_world = utils.multiplyMatrices(utils.multiplyMatrices(utils.multiplyMatrices(MakeRotateArbMatrix([-(molePos[0][2] - hamm_initPos[2]),0,molePos[0][0] - hamm_initPos[0]],c*Math.PI/2), MakeRotateArbMatrix([-(molePos[0][2] - hamm_initPos[2]),0,molePos[0][0] - hamm_initPos[0]],Math.PI)),utils.MakeTranslateMatrix((molePos[0][0] - hamm_initPos[0])*-c/2,(molePos[0][1] - hamm_initPos[1] + 0.8)*-c/2,(molePos[0][2] - hamm_initPos[2])*-c/2)),utils.MakeTranslateMatrix((molePos[0][0] - hamm_initPos[0]),(molePos[0][1] - hamm_initPos[1] + 0.8),(molePos[0][2] - hamm_initPos[2])));
         }
       } else if(keyCode == 83){ //S
         if(c*Math.PI/2 < Math.PI/2){
-          //hamm_world = utils.multiplyMatrices(utils.multiplyMatrices(m4.translation(0,1,0), m4.xRotation(-c*Math.PI/2)), m4.translation(0,-1,0));
-          hamm_world = utils.multiplyMatrices(m4.axisRotation([-(molePos[1][2] - hamm_initPos[2]),0,molePos[1][0] - hamm_initPos[0]],-c*Math.PI/2),m4.translation((molePos[1][0] - hamm_initPos[0])*c,(molePos[1][1] - hamm_initPos[1] + 0.8)*c,(molePos[1][2] - hamm_initPos[2])*c));
+          hamm_world = utils.multiplyMatrices(utils.MakeTranslateMatrix((molePos[1][0] - hamm_initPos[0])*c,(molePos[1][1] - hamm_initPos[1] + 0.8)*c,(molePos[1][2] - hamm_initPos[2])*c) ,utils.multiplyMatrices(utils.multiplyMatrices(utils.MakeTranslateMatrix(hamm_initPos[0], hamm_initPos[1], hamm_initPos[2]), MakeRotateArbMatrix([(molePos[1][0] - hamm_initPos[2]),0,molePos[1][2] - hamm_initPos[0]],-c*Math.PI/2)), utils.MakeTranslateMatrix(-hamm_initPos[0], -hamm_initPos[1], -hamm_initPos[2])));
         } else {
           //hamm_world = utils.multiplyMatrices(utils.multiplyMatrices(utils.multiplyMatrices(m4.translation(0,1,0), m4.xRotation(c*Math.PI/2)), m4.xRotation(Math.PI)),m4.translation(0,-1,0));
-          hamm_world = utils.multiplyMatrices(utils.multiplyMatrices(utils.multiplyMatrices(m4.axisRotation([-(molePos[1][2] - hamm_initPos[2]),0,molePos[1][0] - hamm_initPos[0]],c*Math.PI/2), m4.axisRotation([-(molePos[1][2] - hamm_initPos[2]),0,molePos[1][0] - hamm_initPos[0]],Math.PI)),m4.translation((molePos[1][0] - hamm_initPos[0])*-c/2,(molePos[1][1] - hamm_initPos[1] + 0.8)*-c/2,(molePos[1][2] - hamm_initPos[2])*-c/2)),m4.translation((molePos[1][0] - hamm_initPos[0]),(molePos[1][1] - hamm_initPos[1] + 0.8),(molePos[1][2] - hamm_initPos[2])));
+          //hamm_world = utils.multiplyMatrices(utils.multiplyMatrices(utils.multiplyMatrices(m4.axisRotation([-(molePos[1][2] - hamm_initPos[2]),0,molePos[1][0] - hamm_initPos[0]],c*Math.PI/2), c),m4.translation((molePos[1][0] - hamm_initPos[0])*-c/2,(molePos[1][1] - hamm_initPos[1] + 0.8)*-c/2,(molePos[1][2] - hamm_initPos[2])*-c/2)),m4.translation((molePos[1][0] - hamm_initPos[0]),(molePos[1][1] - hamm_initPos[1] + 0.8),(molePos[1][2] - hamm_initPos[2])));
+          //hamm_world = utils.multiplyMatrices(utils.MakeTranslateMatrix((molePos[0][0] - hamm_initPos[0])*-c,(molePos[0][1] - hamm_initPos[1] + 0.8)*-c,(molePos[0][2] - hamm_initPos[2])*-c), utils.multiplyMatrices(utils.MakeTranslateMatrix((molePos[1][0] - hamm_initPos[0]),(molePos[1][1] - hamm_initPos[1] + 0.8),(molePos[1][2] - hamm_initPos[2])) ,utils.multiplyMatrices(utils.multiplyMatrices(utils.MakeTranslateMatrix(hamm_initPos[0], hamm_initPos[1], hamm_initPos[2]), MakeRotateArbMatrix([(molePos[1][0] - hamm_initPos[2]),0,molePos[1][2] - hamm_initPos[0]],-Math.PI/2)), utils.MakeTranslateMatrix(-hamm_initPos[0], -hamm_initPos[1], -hamm_initPos[2]))));
+          hamm_world = utils.multiplyMatrices(utils.MakeTranslateMatrix(-(molePos[1][0] - hamm_initPos[0]),-(molePos[1][0] - hamm_initPos[0]),-(molePos[1][0] - hamm_initPos[0])), utils.multiplyMatrices(utils.MakeTranslateMatrix((molePos[1][0] - hamm_initPos[0]),(molePos[1][1] - hamm_initPos[1] + 0.8),(molePos[1][2] - hamm_initPos[2])) ,utils.multiplyMatrices(utils.multiplyMatrices(utils.MakeTranslateMatrix(hamm_initPos[0], hamm_initPos[1], hamm_initPos[2]), MakeRotateArbMatrix([(molePos[1][0] - hamm_initPos[2]),0,molePos[1][2] - hamm_initPos[0]],-Math.PI/2)), utils.MakeTranslateMatrix(-hamm_initPos[0], -hamm_initPos[1], -hamm_initPos[2]))));
         }
       } else if(keyCode == 68 ){ //D
         if(c*Math.PI/2 < Math.PI/2){
-          //hamm_world = utils.multiplyMatrices(utils.multiplyMatrices(m4.translation(0,1,0), m4.xRotation(-c*Math.PI/2)), m4.translation(0,-1,0));
-          hamm_world = utils.multiplyMatrices(m4.axisRotation([-(molePos[2][2] - hamm_initPos[2]),0,molePos[2][0] - hamm_initPos[0]],-c*Math.PI/2),m4.translation((molePos[2][0] - hamm_initPos[0])*c,(molePos[2][1] - hamm_initPos[1] + 0.8)*c,(molePos[2][2] - hamm_initPos[2])*c));
+          hamm_world = utils.multiplyMatrices(utils.MakeTranslateMatrix((molePos[2][0] - hamm_initPos[0])*c,(molePos[2][1] - hamm_initPos[1] + 0.8)*c,(molePos[2][2] - hamm_initPos[2])*c) ,utils.multiplyMatrices(utils.multiplyMatrices(utils.MakeTranslateMatrix(hamm_initPos[0], hamm_initPos[1], hamm_initPos[2]), MakeRotateArbMatrix([(molePos[2][0] - hamm_initPos[2]),0,molePos[2][2] - hamm_initPos[0]],-c*Math.PI/2)), utils.MakeTranslateMatrix(-hamm_initPos[0], -hamm_initPos[1], -hamm_initPos[2])));
         } else {
           //hamm_world = utils.multiplyMatrices(utils.multiplyMatrices(utils.multiplyMatrices(m4.translation(0,1,0), m4.xRotation(c*Math.PI/2)), m4.xRotation(Math.PI)),m4.translation(0,-1,0));
           hamm_world = utils.multiplyMatrices(utils.multiplyMatrices(utils.multiplyMatrices(m4.axisRotation([-(molePos[2][2] - hamm_initPos[2]),0,molePos[2][0] - hamm_initPos[0]],c*Math.PI/2), m4.axisRotation([-(molePos[2][2] - hamm_initPos[2]),0,molePos[2][0] - hamm_initPos[0]],Math.PI)),m4.translation((molePos[2][0] - hamm_initPos[0])*-c/2,(molePos[2][1] - hamm_initPos[1] + 0.8)*-c/2,(molePos[2][2] - hamm_initPos[2])*-c/2)),m4.translation((molePos[2][0] - hamm_initPos[0]),(molePos[2][1] - hamm_initPos[1] + 0.8),(molePos[2][2] - hamm_initPos[2])));
         }
       } else if(keyCode == 90){ //Z
         if(c*Math.PI/2 < Math.PI/2){
-          //hamm_world = utils.multiplyMatrices(utils.multiplyMatrices(m4.translation(0,1,0), m4.xRotation(-c*Math.PI/2)), m4.translation(0,-1,0));
-          hamm_world = utils.multiplyMatrices(m4.axisRotation([-(molePos[3][2] - hamm_initPos[2]),0,molePos[3][0] - hamm_initPos[0]],-c*Math.PI/2),m4.translation((molePos[3][0] - hamm_initPos[0])*c,(molePos[3][1] - hamm_initPos[1] + 0.8)*c,(molePos[3][2] - hamm_initPos[2])*c));
+          hamm_world = utils.multiplyMatrices(utils.MakeTranslateMatrix((molePos[3][0] - hamm_initPos[0])*c,(molePos[3][1] - hamm_initPos[1] + 0.8)*c,(molePos[3][2] - hamm_initPos[2])*c) ,utils.multiplyMatrices(utils.multiplyMatrices(utils.MakeTranslateMatrix(hamm_initPos[0], hamm_initPos[1], hamm_initPos[2]), MakeRotateArbMatrix([(molePos[3][0] - hamm_initPos[2]),0,molePos[3][2] - hamm_initPos[0]],-c*Math.PI/2)), utils.MakeTranslateMatrix(-hamm_initPos[0], -hamm_initPos[1], -hamm_initPos[2])));
         } else {
           //hamm_world = utils.multiplyMatrices(utils.multiplyMatrices(utils.multiplyMatrices(m4.translation(0,1,0), m4.xRotation(c*Math.PI/2)), m4.xRotation(Math.PI)),m4.translation(0,-1,0));
           hamm_world = utils.multiplyMatrices(utils.multiplyMatrices(utils.multiplyMatrices(m4.axisRotation([-(molePos[3][2] - hamm_initPos[2]),0,molePos[3][0] - hamm_initPos[0]],c*Math.PI/2), m4.axisRotation([-(molePos[3][2] - hamm_initPos[2]),0,molePos[3][0] - hamm_initPos[0]],Math.PI)),m4.translation((molePos[3][0] - hamm_initPos[0])*-c/2,(molePos[3][1] - hamm_initPos[1] + 0.8)*-c/2,(molePos[3][2] - hamm_initPos[2])*-c/2)),m4.translation((molePos[3][0] - hamm_initPos[0]),(molePos[3][1] - hamm_initPos[1] + 0.8),(molePos[3][2] - hamm_initPos[2])));
         }
       } else if(keyCode == 88){ //X
         if(c*Math.PI/2 < Math.PI/2){
-          //hamm_world = utils.multiplyMatrices(utils.multiplyMatrices(m4.translation(0,1,0), m4.xRotation(-c*Math.PI/2)), m4.translation(0,-1,0));
-          hamm_world = utils.multiplyMatrices(m4.axisRotation([-(molePos[4][2] - hamm_initPos[2]),0,molePos[4][0] - hamm_initPos[0]],-c*Math.PI/2),m4.translation((molePos[4][0] - hamm_initPos[0])*c,(molePos[4][1] - hamm_initPos[1] + 0.8)*c,(molePos[4][2] - hamm_initPos[2])*c));
+          hamm_world = utils.multiplyMatrices(utils.MakeTranslateMatrix((molePos[4][0] - hamm_initPos[0])*c,(molePos[4][1] - hamm_initPos[1] + 0.8)*c,(molePos[4][2] - hamm_initPos[2])*c) ,utils.multiplyMatrices(utils.multiplyMatrices(utils.MakeTranslateMatrix(hamm_initPos[0], hamm_initPos[1], hamm_initPos[2]), MakeRotateArbMatrix([(molePos[4][0] - hamm_initPos[2]),0,molePos[4][2] - hamm_initPos[0]],-c*Math.PI/2)), utils.MakeTranslateMatrix(-hamm_initPos[0], -hamm_initPos[1], -hamm_initPos[2])));
         } else {
-          //hamm_world = utils.multiplyMatrices(utils.multiplyMatrices(utils.multiplyMatrices(m4.translation(0,1,0), m4.xRotation(c*Math.PI/2)), m4.xRotation(Math.PI)),m4.translation(0,-1,0));
+          //hamm_world = utils.multiplyMatrices(utils.multiplyMatrices(utils.multiplyMatrices(m4.translation(0,1,0), m4.xRotation(c*Math.PI/2)), m4.xRotation(Math.PI)),m4.translation(0,-1,0));a
           hamm_world = utils.multiplyMatrices(utils.multiplyMatrices(utils.multiplyMatrices(m4.axisRotation([-(molePos[4][2] - hamm_initPos[2]),0,molePos[4][0] - hamm_initPos[0]],c*Math.PI/2), m4.axisRotation([-(molePos[4][2] - hamm_initPos[2]),0,molePos[4][0] - hamm_initPos[0]],Math.PI)),m4.translation((molePos[4][0] - hamm_initPos[0])*-c/2,(molePos[4][1] - hamm_initPos[1] + 0.8)*-c/2,(molePos[4][2] - hamm_initPos[2])*-c/2)),m4.translation((molePos[4][0] - hamm_initPos[0]),(molePos[4][1] - hamm_initPos[1] + 0.8),(molePos[4][2] - hamm_initPos[2])));
         }
       }
@@ -386,6 +376,7 @@ async function main() {
 
     gl.drawElements(gl.TRIANGLES, indices_hammer.length, gl.UNSIGNED_SHORT, 0);
     
+    time = time+timeInt;
   }
   setInterval(drawScene,timeInt);
 
@@ -393,10 +384,49 @@ async function main() {
 
 window.onload = main;
 
+//random functions
 function m4toUsual(m4){
   var temp = [];
   for(i=0;i<m4.length;i++){
     temp[i] = m4[i];
   }
   return temp;
+}
+
+function MvMatrix(cam_pos,targ_pos,up_vec){
+  var Mv = [];
+  var v_z = [];
+  var v_x = [];
+  v_z[0] = (cam_pos[0] - targ_pos[0]) / math.norm([cam_pos[0] - targ_pos[0], cam_pos[1] - targ_pos[1], cam_pos[2] - targ_pos[2]]);
+  v_z[1] = (cam_pos[1] - targ_pos[1]) / math.norm([cam_pos[0] - targ_pos[0], cam_pos[1] - targ_pos[1], cam_pos[2] - targ_pos[2]]);
+  v_z[2] = (cam_pos[2] - targ_pos[2]) / math.norm([cam_pos[0] - targ_pos[0], cam_pos[1] - targ_pos[1], cam_pos[2] - targ_pos[2]]);
+
+  v_x[0] = math.cross(up_vec,v_z)[0] / math.norm(math.cross(up_vec,v_z));
+  v_x[1] = math.cross(up_vec,v_z)[1] / math.norm(math.cross(up_vec,v_z));
+  v_x[2] = math.cross(up_vec,v_z)[2] / math.norm(math.cross(up_vec,v_z));
+
+  var v_y = math.cross(v_z, v_z);
+
+  Mv = [v_x[0], v_x[1], v_x[2], -(v_x[0]*cam_pos[0] + v_x[1]*cam_pos[1] + v_x[2]*cam_pos[2]), v_y[0], v_y[1], v_y[2], -(v_y[0]*cam_pos[0] + v_y[1]*cam_pos[1] + v_y[2]*cam_pos[2]), v_z[0], v_z[1], v_z[2], -(v_z[0]*cam_pos[0] + v_z[1]*cam_pos[1] + v_z[2]*cam_pos[2]), 0, 0, 0, 1];
+  return Mv;
+}
+
+function MakeRotateArbMatrix(axis,a){
+  var alpha_R1 = a;
+	var beta_R1 = (Math.atan(axis[0]/axis[2]));
+	var gamma_R1 = (Math.atan(axis[1]/Math.sqrt(axis[0]**2 + axis[2]**2)));
+	var Ry_R1 =[Math.cos(beta_R1),		0.0,		Math.sin(beta_R1),		0.0,
+			   0.0,		1.0,		0.0,		0.0,
+			   -Math.sin(beta_R1),		0.0,		Math.cos(beta_R1),		0.0,
+			   0.0,		0.0,		0.0,		1.0];
+	var Rz_R1 =[Math.cos(gamma_R1),		-Math.sin(gamma_R1),		0.0,		0.0,
+				Math.sin(gamma_R1),		Math.cos(gamma_R1),		0.0,		0.0,
+			   0,		0.0,		1,		0.0,
+			   0.0,		0.0,		0.0,		1.0];
+	var Rx_R1 =[1.0,		0.0,		0.0,		0.0,
+			   0.0,		Math.cos(alpha_R1),		-Math.sin(alpha_R1),		0.0,
+			   0.0,		Math.sin(alpha_R1),		Math.cos(alpha_R1),		0.0,
+			   0.0,		0.0,		0.0,		1.0];
+	var R1 = utils.multiplyMatrices(utils.multiplyMatrices(utils.multiplyMatrices(utils.multiplyMatrices(Ry_R1,Rz_R1),Rx_R1),utils.invertMatrix(Rz_R1)),utils.invertMatrix(Ry_R1));		   
+	return R1;
 }
