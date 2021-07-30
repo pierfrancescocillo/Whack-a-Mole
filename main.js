@@ -51,7 +51,7 @@ var lightColLocation;
 
 //altre variabili
 var keyCode;
-
+var duration = 45; //[s]
 const cameraTarget = [0, 0, 0];
 var cameraPosition = [0, 10, 10];
 
@@ -69,12 +69,14 @@ const molePos = [
   [-0.3,0.4,0.65],
   [0.3,0.4,0.65]
 ];
+var altezza_mole = 0.8;
 
-var temp;
+var score = 0;
 
 //booleani utili
 var boolClick = 0;
 var boolTalpa = [0,0,0,0,0];
+var bool_hit = [0,0,0,0,0];
 
 
 //sliders
@@ -93,6 +95,9 @@ document.getElementById("sl_phi").oninput = function(){
   document.getElementById("phi_value").innerHTML = this.value;
 }
 
+document.getElementById("score_value").innerHTML = score;
+document.getElementById("time_value").innerHTML = 45;
+
 //key codes:
 //A -> 65
 //S -> 83
@@ -106,6 +111,11 @@ document.onkeydown = function(key){
     c = 0;
     keyCode = key.keyCode;
   }
+}
+
+const reset_but = document.getElementById("reset_but")
+reset_but.onclick = function(){
+  location.reload();
 }
 
 async function main() {
@@ -331,47 +341,47 @@ async function main() {
     if(boolClick != 0){
       if(keyCode == 65){ //A
         if(c*Math.PI/2 < Math.PI/2){
-          hamm_world = utils.multiplyMatrices(utils.MakeTranslateMatrix((molePos[0][0] - hamm_initPos[0])*c,(molePos[0][1] - hamm_initPos[1] + 0.8)*c,(molePos[0][2] - hamm_initPos[2])*c), MakeRotateArbMatrix([(molePos[0][0] - hamm_initPos[2]),0,molePos[0][2] - hamm_initPos[0]],-c*Math.PI/2,hamm_initPos));
+          hamm_world = utils.multiplyMatrices(utils.MakeTranslateMatrix((molePos[0][0] - hamm_initPos[0])*c,(molePos[0][1] - hamm_initPos[1] + altezza_mole)*c,(molePos[0][2] - hamm_initPos[2])*c), MakeRotateArbMatrix([(molePos[0][0] - hamm_initPos[2]),0,molePos[0][2] - hamm_initPos[0]],-c*Math.PI/2,hamm_initPos));
           worldMatrix_hammer = utils.multiplyMatrices(hamm_world,utils.MakeTranslateMatrix(hamm_initPos[0],hamm_initPos[1],hamm_initPos[2]));
         } else {
-          hamm_world = utils.multiplyMatrices(MakeRotateArbMatrix([(molePos[0][0] - hamm_initPos[2]),0,molePos[0][2] - hamm_initPos[0]],c*Math.PI/4,[molePos[0][0],molePos[0][1] + 0.8,molePos[0][2]]) , MakeRotateArbMatrix([(molePos[0][0] - hamm_initPos[2]),0,molePos[0][2] - hamm_initPos[0]],-Math.PI/2,[molePos[0][0],molePos[0][1] + 0.8,molePos[0][2]]) );
-          //hamm_world = utils.multiplyMatrices(utils.MakeTranslateMatrix((hamm_initPos[0] - molePos[0][0])*c/2,(hamm_initPos[1] - molePos[0][1] - 0.8)*c/2,(hamm_initPos[2] - molePos[0][2])*c/2) , utils.multiplyMatrices(MakeRotateArbMatrix([(molePos[0][0] - hamm_initPos[2]),0,molePos[0][2] - hamm_initPos[0]],c*Math.PI/4,[molePos[0][0],molePos[0][1] + 0.8,molePos[0][2]]) , MakeRotateArbMatrix([(molePos[0][0] - hamm_initPos[2]),0,molePos[0][2] - hamm_initPos[0]],-Math.PI/2,[molePos[0][0],molePos[0][1] + 0.8,molePos[0][2]]) ) );
-          worldMatrix_hammer = utils.multiplyMatrices(hamm_world,utils.MakeTranslateMatrix(molePos[0][0],molePos[0][1]+0.8,molePos[0][2]));
+          //hamm_world = utils.multiplyMatrices(MakeRotateArbMatrix([(molePos[0][0] - hamm_initPos[2]),0,molePos[0][2] - hamm_initPos[0]],c*Math.PI/4,[molePos[0][0],molePos[0][1] + altezza_mole,molePos[0][2]]) , MakeRotateArbMatrix([(molePos[0][0] - hamm_initPos[2]),0,molePos[0][2] - hamm_initPos[0]],-Math.PI/2,[molePos[0][0],molePos[0][1] altezza_mole,molePos[0][2]]) );
+          hamm_world = utils.multiplyMatrices(utils.MakeTranslateMatrix((hamm_initPos[0] - molePos[0][0])*c/2,(hamm_initPos[1] - molePos[0][1] - altezza_mole)*c/2,(hamm_initPos[2] - molePos[0][2])*c/2) , utils.multiplyMatrices(MakeRotateArbMatrix([(molePos[0][0] - hamm_initPos[2]),0,molePos[0][2] - hamm_initPos[0]],c*Math.PI/4,[molePos[0][0],molePos[0][1] + altezza_mole,molePos[0][2]]) , MakeRotateArbMatrix([(molePos[0][0] - hamm_initPos[2]),0,molePos[0][2] - hamm_initPos[0]],-Math.PI/2,[molePos[0][0],molePos[0][1] + altezza_mole,molePos[0][2]]) ) );
+          worldMatrix_hammer = utils.multiplyMatrices(hamm_world,utils.MakeTranslateMatrix(molePos[0][0],molePos[0][1]+altezza_mole,molePos[0][2]));
         }
       } else if(keyCode == 83){ //S
         if(c*Math.PI/2 < Math.PI/2){
-          hamm_world = utils.multiplyMatrices(utils.MakeTranslateMatrix((molePos[1][0] - hamm_initPos[0])*c,(molePos[1][1] - hamm_initPos[1] + 0.8)*c,(molePos[1][2] - hamm_initPos[2])*c), MakeRotateArbMatrix([(molePos[1][0] - hamm_initPos[2]),0,molePos[1][2] - hamm_initPos[0]],-c*Math.PI/2,hamm_initPos));
+          hamm_world = utils.multiplyMatrices(utils.MakeTranslateMatrix((molePos[1][0] - hamm_initPos[0])*c,(molePos[1][1] - hamm_initPos[1] + altezza_mole)*c,(molePos[1][2] - hamm_initPos[2])*c), MakeRotateArbMatrix([(molePos[1][0] - hamm_initPos[2]),0,molePos[1][2] - hamm_initPos[0]],-c*Math.PI/2,hamm_initPos));
           worldMatrix_hammer = utils.multiplyMatrices(hamm_world,utils.MakeTranslateMatrix(hamm_initPos[0],hamm_initPos[1],hamm_initPos[2]));
         } else {
-          hamm_world = utils.multiplyMatrices(utils.MakeTranslateMatrix((hamm_initPos[0] - molePos[1][0])*c/2,(hamm_initPos[1] - molePos[1][1] - 0.8)*c/2,(hamm_initPos[2] - molePos[1][2])*c/2) , utils.multiplyMatrices(MakeRotateArbMatrix([(molePos[1][0] - hamm_initPos[2]),0,molePos[1][2] - hamm_initPos[0]],c*Math.PI/4,[molePos[1][0],molePos[1][1] + 0.8,molePos[1][2]]) , MakeRotateArbMatrix([(molePos[1][0] - hamm_initPos[2]),0,molePos[1][2] - hamm_initPos[0]],-Math.PI/2,[molePos[1][0],molePos[1][1] + 0.8,molePos[1][2]]) ) );
-          worldMatrix_hammer = utils.multiplyMatrices(hamm_world,utils.MakeTranslateMatrix(molePos[1][0],molePos[1][1]+0.8,molePos[1][2]));
+          hamm_world = utils.multiplyMatrices(utils.MakeTranslateMatrix((hamm_initPos[0] - molePos[1][0])*c/2,(hamm_initPos[1] - molePos[1][1] - altezza_mole)*c/2,(hamm_initPos[2] - molePos[1][2])*c/2) , utils.multiplyMatrices(MakeRotateArbMatrix([(molePos[1][0] - hamm_initPos[2]),0,molePos[1][2] - hamm_initPos[0]],c*Math.PI/4,[molePos[1][0],molePos[1][1] + altezza_mole,molePos[1][2]]) , MakeRotateArbMatrix([(molePos[1][0] - hamm_initPos[2]),0,molePos[1][2] - hamm_initPos[0]],-Math.PI/2,[molePos[1][0],molePos[1][1] + altezza_mole,molePos[1][2]]) ) );
+          worldMatrix_hammer = utils.multiplyMatrices(hamm_world,utils.MakeTranslateMatrix(molePos[1][0],molePos[1][1]+altezza_mole,molePos[1][2]));
         }
       } else if(keyCode == 68 ){ //D
         if(c*Math.PI/2 < Math.PI/2){
-          hamm_world = utils.multiplyMatrices(utils.MakeTranslateMatrix((molePos[2][0] - hamm_initPos[0])*c,(molePos[2][1] - hamm_initPos[1] + 0.8)*c,(molePos[2][2] - hamm_initPos[2])*c), MakeRotateArbMatrix([(molePos[2][0] - hamm_initPos[2]),0,molePos[2][2] - hamm_initPos[0]],-c*Math.PI/2,hamm_initPos));
+          hamm_world = utils.multiplyMatrices(utils.MakeTranslateMatrix((molePos[2][0] - hamm_initPos[0])*c,(molePos[2][1] - hamm_initPos[1] + altezza_mole)*c,(molePos[2][2] - hamm_initPos[2])*c), MakeRotateArbMatrix([(molePos[2][0] - hamm_initPos[2]),0,molePos[2][2] - hamm_initPos[0]],-c*Math.PI/2,hamm_initPos));
           worldMatrix_hammer = utils.multiplyMatrices(hamm_world,utils.MakeTranslateMatrix(hamm_initPos[0],hamm_initPos[1],hamm_initPos[2]));
         } else {
-          hamm_world = utils.multiplyMatrices(utils.MakeTranslateMatrix((hamm_initPos[0] - molePos[2][0])*c/2,(hamm_initPos[1] - molePos[2][1] - 0.8)*c/2,(hamm_initPos[2] - molePos[2][2])*c/2) , utils.multiplyMatrices(MakeRotateArbMatrix([(molePos[2][0] - hamm_initPos[2]),0,molePos[2][2] - hamm_initPos[0]],c*Math.PI/4,[molePos[2][0],molePos[2][1] + 0.8,molePos[2][2]]) , MakeRotateArbMatrix([(molePos[2][0] - hamm_initPos[2]),0,molePos[2][2] - hamm_initPos[0]],-Math.PI/2,[molePos[2][0],molePos[2][1] + 0.8,molePos[2][2]]) ) );
-          worldMatrix_hammer = utils.multiplyMatrices(hamm_world,utils.MakeTranslateMatrix(molePos[2][0],molePos[2][1]+0.8,molePos[2][2]));
+          hamm_world = utils.multiplyMatrices(utils.MakeTranslateMatrix((hamm_initPos[0] - molePos[2][0])*c/2,(hamm_initPos[1] - molePos[2][1] - altezza_mole)*c/2,(hamm_initPos[2] - molePos[2][2])*c/2) , utils.multiplyMatrices(MakeRotateArbMatrix([(molePos[2][0] - hamm_initPos[2]),0,molePos[2][2] - hamm_initPos[0]],c*Math.PI/4,[molePos[2][0],molePos[2][1] + altezza_mole,molePos[2][2]]) , MakeRotateArbMatrix([(molePos[2][0] - hamm_initPos[2]),0,molePos[2][2] - hamm_initPos[0]],-Math.PI/2,[molePos[2][0],molePos[2][1] + altezza_mole,molePos[2][2]]) ) );
+          worldMatrix_hammer = utils.multiplyMatrices(hamm_world,utils.MakeTranslateMatrix(molePos[2][0],molePos[2][1]+altezza_mole,molePos[2][2]));
         }
       } else if(keyCode == 90){ //Z
         if(c*Math.PI/2 < Math.PI/2){
-          hamm_world = utils.multiplyMatrices(utils.MakeTranslateMatrix((molePos[3][0] - hamm_initPos[0])*c,(molePos[3][1] - hamm_initPos[1] + 0.8)*c,(molePos[3][2] - hamm_initPos[2])*c), MakeRotateArbMatrix([(molePos[3][0] - hamm_initPos[2]),0,molePos[3][2] - hamm_initPos[0]],-c*Math.PI/2,hamm_initPos));
+          hamm_world = utils.multiplyMatrices(utils.MakeTranslateMatrix((molePos[3][0] - hamm_initPos[0])*c,(molePos[3][1] - hamm_initPos[1] + altezza_mole)*c,(molePos[3][2] - hamm_initPos[2])*c), MakeRotateArbMatrix([(molePos[3][0] - hamm_initPos[2]),0,molePos[3][2] - hamm_initPos[0]],-c*Math.PI/2,hamm_initPos));
           worldMatrix_hammer = utils.multiplyMatrices(hamm_world,utils.MakeTranslateMatrix(hamm_initPos[0],hamm_initPos[1],hamm_initPos[2]));
         } else {
-          hamm_world = utils.multiplyMatrices(utils.MakeTranslateMatrix((hamm_initPos[0] - molePos[3][0])*c/2,(hamm_initPos[1] - molePos[3][1] - 0.8)*c/2,(hamm_initPos[2] - molePos[3][2])*c/2) , utils.multiplyMatrices(MakeRotateArbMatrix([(molePos[3][0] - hamm_initPos[2]),0,molePos[3][2] - hamm_initPos[0]],c*Math.PI/4,[molePos[3][0],molePos[3][1] + 0.8,molePos[3][2]]) , MakeRotateArbMatrix([(molePos[3][0] - hamm_initPos[2]),0,molePos[3][2] - hamm_initPos[0]],-Math.PI/2,[molePos[3][0],molePos[3][1] + 0.8,molePos[3][2]]) ) );
-          worldMatrix_hammer = utils.multiplyMatrices(hamm_world,utils.MakeTranslateMatrix(molePos[3][0],molePos[3][1]+0.8,molePos[3][2]));
+          hamm_world = utils.multiplyMatrices(utils.MakeTranslateMatrix((hamm_initPos[0] - molePos[3][0])*c/2,(hamm_initPos[1] - molePos[3][1] - altezza_mole)*c/2,(hamm_initPos[2] - molePos[3][2])*c/2) , utils.multiplyMatrices(MakeRotateArbMatrix([(molePos[3][0] - hamm_initPos[2]),0,molePos[3][2] - hamm_initPos[0]],c*Math.PI/4,[molePos[3][0],molePos[3][1] + altezza_mole,molePos[3][2]]) , MakeRotateArbMatrix([(molePos[3][0] - hamm_initPos[2]),0,molePos[3][2] - hamm_initPos[0]],-Math.PI/2,[molePos[3][0],molePos[3][1] + altezza_mole,molePos[3][2]]) ) );
+          worldMatrix_hammer = utils.multiplyMatrices(hamm_world,utils.MakeTranslateMatrix(molePos[3][0],molePos[3][1]+altezza_mole,molePos[3][2]));
         }
       } else if(keyCode == 88){ //X
         if(c*Math.PI/2 < Math.PI/2){
-          hamm_world = utils.multiplyMatrices(utils.MakeTranslateMatrix((molePos[4][0] - hamm_initPos[0])*c,(molePos[4][1] - hamm_initPos[1] + 0.8)*c,(molePos[4][2] - hamm_initPos[2])*c), MakeRotateArbMatrix([(molePos[4][0] - hamm_initPos[2]),0,molePos[4][2] - hamm_initPos[0]],-c*Math.PI/2,hamm_initPos));
+          hamm_world = utils.multiplyMatrices(utils.MakeTranslateMatrix((molePos[4][0] - hamm_initPos[0])*c,(molePos[4][1] - hamm_initPos[1] + altezza_mole)*c,(molePos[4][2] - hamm_initPos[2])*c), MakeRotateArbMatrix([(molePos[4][0] - hamm_initPos[2]),0,molePos[4][2] - hamm_initPos[0]],-c*Math.PI/2,hamm_initPos));
           worldMatrix_hammer = utils.multiplyMatrices(hamm_world,utils.MakeTranslateMatrix(hamm_initPos[0],hamm_initPos[1],hamm_initPos[2]));
         } else {
-          hamm_world = utils.multiplyMatrices(utils.MakeTranslateMatrix((hamm_initPos[0] - molePos[4][0])*c/2,(hamm_initPos[1] - molePos[4][1] - 0.8)*c/2,(hamm_initPos[2] - molePos[4][2])*c/2) , utils.multiplyMatrices(MakeRotateArbMatrix([(molePos[4][0] - hamm_initPos[2]),0,molePos[4][2] - hamm_initPos[0]],c*Math.PI/4,[molePos[4][0],molePos[4][1] + 0.8,molePos[4][2]]) , MakeRotateArbMatrix([(molePos[4][0] - hamm_initPos[2]),0,molePos[4][2] - hamm_initPos[0]],-Math.PI/2,[molePos[4][0],molePos[4][1] + 0.8,molePos[4][2]]) ) );
-          worldMatrix_hammer = utils.multiplyMatrices(hamm_world,utils.MakeTranslateMatrix(molePos[4][0],molePos[4][1]+0.8,molePos[4][2]));
+          hamm_world = utils.multiplyMatrices(utils.MakeTranslateMatrix((hamm_initPos[0] - molePos[4][0])*c/2,(hamm_initPos[1] - molePos[4][1] - altezza_mole)*c/2,(hamm_initPos[2] - molePos[4][2])*c/2) , utils.multiplyMatrices(MakeRotateArbMatrix([(molePos[4][0] - hamm_initPos[2]),0,molePos[4][2] - hamm_initPos[0]],c*Math.PI/4,[molePos[4][0],molePos[4][1] + altezza_mole,molePos[4][2]]) , MakeRotateArbMatrix([(molePos[4][0] - hamm_initPos[2]),0,molePos[4][2] - hamm_initPos[0]],-Math.PI/2,[molePos[4][0],molePos[4][1] + altezza_mole,molePos[4][2]]) ) );
+          worldMatrix_hammer = utils.multiplyMatrices(hamm_world,utils.MakeTranslateMatrix(molePos[4][0],molePos[4][1]+altezza_mole,molePos[4][2]));
         }
       }
-      c = c + timeInt*0.001;
+      c = c + 6*timeInt*0.001;
       if(c*Math.PI/2 > Math.PI){
         boolClick = 0;
       }
@@ -400,13 +410,14 @@ async function main() {
       }
   
       if(boolTalpa[i]){
-        if(m[i]*0.4<0.4){
-          mole_world = utils.MakeTranslateMatrix(0,m[i]*0.4,0);
+        if(m[i]*altezza_mole/2<altezza_mole/2){
+          mole_world = utils.MakeTranslateMatrix(0,m[i]*altezza_mole/2,0);
         } else {
-          mole_world = utils.multiplyMatrices(utils.MakeTranslateMatrix(0,-m[i]*0.4,0),utils.MakeTranslateMatrix(0,0.8,0));
+          mole_world = utils.multiplyMatrices(utils.MakeTranslateMatrix(0,-m[i]*altezza_mole/2,0),utils.MakeTranslateMatrix(0,altezza_mole,0));
         }
-        m[i] = m[i] + timeInt*0.001;
-        if(m[i]*0.4 > 0.8){
+        m[i] = m[i] + 2*timeInt*0.001;
+        if(m[i]*altezza_mole/2 > altezza_mole){
+          bool_hit[i] = 0;
           boolTalpa[i] = 0;
           m[i]=0;
         }
@@ -427,11 +438,32 @@ async function main() {
       gl.bindVertexArray(vao_mole);
 
       gl.drawElements(gl.TRIANGLES, indices_mole.length, gl.UNSIGNED_SHORT, 0);
+
+      if(boolTalpa[i] && boolClick){
+        if((i==0 && keyCode == 65) || (i==1 && keyCode == 83) || (i==2 && keyCode == 68) || (i==3 && keyCode == 90) || (i==4 && keyCode == 88)){
+          if(c>1 && bool_hit[i] == 0){
+            score = score + 1;
+            bool_hit[i] = 1;
+          }
+        }
+      }
     }
 
     time = time+timeInt;
+
+    document.getElementById("score_value").innerHTML = score;
+    document.getElementById("time_value").innerHTML = duration - time*0.001;
+    if(time*0.001 > duration){
+      clearInterval(refreshID);
+      swal({
+        title: "Hai totalizzato "+score.toString()+" punti",
+        confirmButtonText: 'Play Again',
+      }).then((value) => {
+        location.reload();
+      });
+    }
   }
-  setInterval(drawScene,timeInt);
+  var refreshID = setInterval(drawScene,timeInt);
 
 }  
 

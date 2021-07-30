@@ -43,3 +43,27 @@
     background-color: #ebebeb;
     margin: auto;
 }
+
+.score_container {
+    width: 260px;
+    position:absolute;
+    padding:20px;
+    display:inline-block;
+    background: linear-gradient(#2772bf,#373b44);
+    border:3px solid black;
+    border-radius:25px;
+    margin-left:100px;
+    margin-top: 300px;
+}
+
+#reset_but {
+    position:absolute;
+    padding:5px;
+    display:inline-block;
+    background: linear-gradient(#2772bf,#373b44);
+    border:3px solid black;
+    border-radius:25px;
+    margin-left:100px;
+    margin-top: 400px;
+    cursor: pointer;
+}
