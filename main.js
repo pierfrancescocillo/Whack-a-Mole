@@ -1,10 +1,9 @@
-
+var program;
 var gl;
 var shaderDir;
 var model_cabinet;
 var baseDir;
 
-var TextCoords;
 var textLocation;
 
 var vertices_cabinet;
@@ -45,10 +44,26 @@ var viewWorldMatrix_mole;
 var projectionMatrix_mole;
 
 var nMatrixLocation;
-var diffColorLocation;
+var pMatrixLocation;
+var lightAmbientLocation;
+var eyePosLocation;
 var lightDirLocation;
 var lightColLocation;
+var specularColorLocation;
+var SpecShineLocation;
+var emitColorLocation;
+var LPosLocation;
+var ConeOutLocation;
+var ConeInLocation;
+var DecayLocation;
+var TargetLocation;
 
+var Decay=0;
+var Target=61;
+var ConIn=80;
+var ConOut=30;
+var SpecShine=50.0;
+var LPos=[0.3,5.0,0.3];
 //altre variabili
 var keyCode;
 var duration = 45; //[s]
@@ -78,6 +93,13 @@ var boolClick = 0;
 var boolTalpa = [0,0,0,0,0];
 var bool_hit = [0,0,0,0,0];
 
+//colors
+var emitColor=[80.0/255.0, 80.0/255.0, 80.0/255.0, 255.0/255.0];
+var emitColor2=[220.0/255.0, 220.0/255.0, 220.0/255.0, 255.0/255.0];
+var specularColor=[255.0/255.0, 255.0/255.0, 255.0/255.0, 255.0/255.0];
+var directionalLightColor = [170.0/255.0, 170.0/255.0, 170.0/255.0, 255.0/255.0];
+//var ambientLightColor=[113.0/255.0, 109.0/255.0, 116.0/255.0, 255.0/255.0];
+var ambientLightColor=[50.0/255.0, 50.0/255.0, 50.0/255.0, 255.0/255.0];
 
 //sliders
 document.getElementById("rho_value").innerHTML = document.getElementById("sl_rho").value;
@@ -119,7 +141,7 @@ reset_but.onclick = function(){
 }
 
 async function main() {
-
+/*
   var vs_text = [
   '#version 300 es',
   '',
@@ -151,7 +173,7 @@ async function main() {
   '   outColor = texture(u_texture, uvFS);',
   '}'
   ].join('\n');
-
+*/
   var canvas = document.getElementById("canvas");
   
   //window.addEventListener("keydown", keyFunctionDown, false);
@@ -166,17 +188,32 @@ async function main() {
       document.write("GL context not opened");
       return;
   }
-
+/*
   var vertexShader = utils.createShader(gl, gl.VERTEX_SHADER, vs_text);
   var fragmentShader = utils.createShader(gl, gl.FRAGMENT_SHADER, fs_text);
   program = utils.createProgram(gl, vertexShader, fragmentShader);
+*/
+var vertexShader = utils.createShader(gl, gl.VERTEX_SHADER, vertexShaderSource_cabinet);
+var fragmentShader = utils.createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource_cabinet);
+program= utils.createProgram(gl, vertexShader, fragmentShader);
 
-  gl.useProgram(program);
+
 
   model_cabinet = new OBJ.Mesh(worldObjStr_cabinet);
   model_hammer = new OBJ.Mesh(worldObjStr_hammer);
   model_mole = new OBJ.Mesh(worldObjStr_mole);
 
+  var dirLightAlpha=utils.degToRad(80);
+  var dirLightBeta=utils.degToRad(0);
+/*
+var dirLightAlpha=-170;
+var dirLightBeta=170;*/
+  var directionalLight = [Math.sin(dirLightAlpha) * Math.sin(dirLightBeta),
+                    Math.cos(dirLightAlpha),
+                    Math.sin(dirLightAlpha) * Math.cos(dirLightBeta)
+                    ];
+
+  
   function degToRad(deg) {
     return deg * Math.PI / 180;
   }
@@ -194,7 +231,20 @@ async function main() {
   uvAttributeLocation = gl.getAttribLocation(program,"a_uv");
   textLocation = gl.getUniformLocation(program, "u_texture");
   matrixLocation = gl.getUniformLocation(program, "matrix"); 
-
+  nMatrixLocation= gl.getUniformLocation(program, "nMatrix");
+  pMatrixLocation= gl.getUniformLocation(program, "pMatrix");
+  lightDirLocation= gl.getUniformLocation(program, "lightDirection");
+  specularColorLocation=gl.getUniformLocation(program,"specularColor")
+  lightColLocation=gl.getUniformLocation(program, "lightColor");
+  lightAmbientLocation=gl.getUniformLocation(program,"ambientLightColor");
+  eyePosLocation=gl.getUniformLocation(program,"eyePos");
+  SpecShineLocation=gl.getUniformLocation(program,"SpecShine");
+  emitColorLocation=gl.getUniformLocation(program,"emitColor");
+  LPosLocation=gl.getUniformLocation(program,"LPos");
+  ConeOutLocation=gl.getUniformLocation(program,"LConeOut");
+  ConeInLocation=gl.getUniformLocation(program,"LConeIn");
+  DecayLocation=gl.getUniformLocation(program,"LDecay");
+  TargetLocation=gl.getUniformLocation(program,"LTarget");
   //BUFFERS FOR CABINET
   vertices_cabinet = model_cabinet.vertices;
   normals_cabinet  = model_cabinet.vertexNormals;
@@ -209,6 +259,13 @@ async function main() {
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices_cabinet), gl.STATIC_DRAW);
   gl.enableVertexAttribArray(positionAttributeLocation);
   gl.vertexAttribPointer(positionAttributeLocation, 3, gl.FLOAT, false, 0, 0);
+
+  var normalsBuffer_cabinet = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, normalsBuffer_cabinet);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(normals_cabinet), gl.STATIC_DRAW);
+  gl.enableVertexAttribArray(normalsAttributeLocation);
+  gl.vertexAttribPointer(normalsAttributeLocation, 3, gl.FLOAT, false, 0, 0);
+  
 
   var uvBuffer_cabinet = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, uvBuffer_cabinet);
@@ -235,6 +292,12 @@ async function main() {
   gl.enableVertexAttribArray(positionAttributeLocation);
   gl.vertexAttribPointer(positionAttributeLocation, 3, gl.FLOAT, false, 0, 0);
 
+  var normalsBuffer_hammer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, normalsBuffer_hammer);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(normals_hammer), gl.STATIC_DRAW);
+  gl.enableVertexAttribArray(normalsAttributeLocation);
+  gl.vertexAttribPointer(normalsAttributeLocation, 3, gl.FLOAT, false, 0, 0);
+  
   var uvBuffer_hammer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, uvBuffer_hammer);
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(uv_hammer), gl.STATIC_DRAW);
@@ -260,6 +323,12 @@ async function main() {
   gl.enableVertexAttribArray(positionAttributeLocation);
   gl.vertexAttribPointer(positionAttributeLocation, 3, gl.FLOAT, false, 0, 0);
 
+  var normalsBuffer_mole = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, normalsBuffer_mole);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(normals_mole), gl.STATIC_DRAW);
+  gl.enableVertexAttribArray(normalsAttributeLocation);
+  gl.vertexAttribPointer(normalsAttributeLocation, 3, gl.FLOAT, false, 0, 0);
+  
   var uvBuffer_mole = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, uvBuffer_mole);
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(uv_mole), gl.STATIC_DRAW);
@@ -308,13 +377,13 @@ async function main() {
     gl.frontFace(gl.CCW);
     gl.cullFace(gl.BACK);
 
-    
+    gl.useProgram(program)
     cameraPosition = [
       cameraTarget[0] + document.getElementById("sl_rho").value * Math.cos(degToRad(document.getElementById("sl_theta").value)) * Math.sin(degToRad(document.getElementById("sl_phi").value)),
       cameraTarget[1] + document.getElementById("sl_rho").value * Math.sin(degToRad(document.getElementById("sl_theta").value)),
       cameraTarget[2] + document.getElementById("sl_rho").value * Math.cos(degToRad(document.getElementById("sl_theta").value)) * Math.cos(degToRad(document.getElementById("sl_phi").value))
     ];
-
+    var eyePos=[cameraPosition[0],cameraPosition[1],cameraPosition[2]];
     perspectiveMatrix = utils.MakePerspective(60, gl.canvas.width/gl.canvas.height, 0.1, 100.0);//(fieldOfView,aspect,zNear,zFar)
     viewMatrix = utils.MakeView(cameraPosition[0],cameraPosition[1],cameraPosition[2],-document.getElementById("sl_theta").value,-document.getElementById("sl_phi").value),
 
@@ -326,17 +395,30 @@ async function main() {
     //worldMatrix_cabinet = MakeRotateArbMatrix(time,[1,0,0]);
     viewWorldMatrix_cabinet = utils.multiplyMatrices(viewMatrix, worldMatrix_cabinet);
     projectionMatrix_cabinet = utils.multiplyMatrices(perspectiveMatrix, viewWorldMatrix_cabinet);
+    var normalMatrix_cabinet=utils.invertMatrix(utils.transposeMatrix(worldMatrix_cabinet));
 
     gl.uniformMatrix4fv(matrixLocation, gl.FALSE, utils.transposeMatrix(projectionMatrix_cabinet));
-
+    gl.uniformMatrix4fv(nMatrixLocation, gl.FALSE, utils.transposeMatrix(normalMatrix_cabinet));
+    gl.uniformMatrix4fv(pMatrixLocation, gl.FALSE, utils.transposeMatrix(worldMatrix_cabinet));
+    gl.uniform3fv(lightDirLocation, directionalLight);
+    gl.uniform4fv(lightColLocation, directionalLightColor);
+    gl.uniform4fv(lightAmbientLocation, ambientLightColor);
+    gl.uniform4fv(specularColorLocation, specularColor);
+    gl.uniform4fv(emitColorLocation, emitColor);
+    gl.uniform3fv(LPosLocation, LPos);
+    gl.uniform1f(ConeOutLocation, ConOut);
+    gl.uniform1f(ConeInLocation, ConIn);
+    gl.uniform1f(DecayLocation, Decay);
+    gl.uniform1f(TargetLocation,Target);
+    gl.uniform3fv(eyePosLocation, eyePos);
+    gl.uniform1f(SpecShineLocation, SpecShine);
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, texture);
     gl.uniform1i(textLocation, 0);
-
     gl.bindVertexArray(vao_cabinet);
 
     gl.drawElements(gl.TRIANGLES, indices_cabinet.length, gl.UNSIGNED_SHORT, 0);
-
+   gl.useProgram(program)
     //DRAW HAMMER
     if(boolClick != 0){
       if(keyCode == 65){ //A
@@ -392,17 +474,31 @@ async function main() {
 
     viewWorldMatrix_hammer = utils.multiplyMatrices(viewMatrix, worldMatrix_hammer);
     projectionMatrix_hammer = utils.multiplyMatrices(perspectiveMatrix, viewWorldMatrix_hammer);
-
+    var normalMatrix_hammer=utils.invertMatrix(utils.transposeMatrix(worldMatrix_hammer));
     gl.uniformMatrix4fv(matrixLocation, gl.FALSE, utils.transposeMatrix(projectionMatrix_hammer));
 
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, texture);
     gl.uniform1i(textLocation, 0);
+    gl.uniformMatrix4fv(nMatrixLocation, gl.FALSE, utils.transposeMatrix(normalMatrix_hammer));
+    gl.uniformMatrix4fv(pMatrixLocation, gl.FALSE, utils.transposeMatrix(worldMatrix_hammer));
+    gl.uniform3fv(lightDirLocation, directionalLight);
+    gl.uniform4fv(lightColLocation, directionalLightColor);
+    gl.uniform4fv(lightAmbientLocation, ambientLightColor);
+    gl.uniform4fv(specularColorLocation, specularColor);
+    gl.uniform4fv(emitColorLocation, emitColor);
+    gl.uniform3fv(LPosLocation, LPos);
+    gl.uniform1f(ConeOutLocation, ConOut);
+    gl.uniform1f(ConeInLocation, ConIn);
+    gl.uniform1f(DecayLocation, Decay);
+    gl.uniform1f(TargetLocation,Target);
+    gl.uniform3fv(eyePosLocation, eyePos);
+    gl.uniform1f(SpecShineLocation, SpecShine);
 
     gl.bindVertexArray(vao_hammer);
 
     gl.drawElements(gl.TRIANGLES, indices_hammer.length, gl.UNSIGNED_SHORT, 0);
-
+gl.useProgram(program);
     //DRAW MOLES
     for(let i = 0; i<5; i++){
       if(Math.random()*20000<10){
@@ -428,13 +524,26 @@ async function main() {
       worldMatrix_mole = utils.multiplyMatrices(mole_world,utils.MakeTranslateMatrix(molePos[i][0],molePos[i][1],molePos[i][2]))
       viewWorldMatrix_mole = utils.multiplyMatrices(viewMatrix, worldMatrix_mole);
       projectionMatrix_mole = utils.multiplyMatrices(perspectiveMatrix, viewWorldMatrix_mole);
-
+      var normalMatrix_mole=utils.invertMatrix(utils.transposeMatrix(worldMatrix_mole));
       gl.uniformMatrix4fv(matrixLocation, gl.FALSE, utils.transposeMatrix(projectionMatrix_mole));
 
       gl.activeTexture(gl.TEXTURE0);
       gl.bindTexture(gl.TEXTURE_2D, texture);
       gl.uniform1i(textLocation, 0);
-
+      gl.uniformMatrix4fv(nMatrixLocation, gl.FALSE, utils.transposeMatrix(normalMatrix_mole));
+      gl.uniformMatrix4fv(pMatrixLocation, gl.FALSE, utils.transposeMatrix(worldMatrix_mole));
+      gl.uniform3fv(lightDirLocation, directionalLight);
+      gl.uniform4fv(lightColLocation, directionalLightColor);
+      gl.uniform4fv(lightAmbientLocation, ambientLightColor);
+      gl.uniform4fv(specularColorLocation, specularColor);
+      gl.uniform4fv(emitColorLocation, emitColor);
+      gl.uniform3fv(LPosLocation, LPos);
+      gl.uniform1f(ConeOutLocation, ConOut);
+      gl.uniform1f(ConeInLocation, ConIn);
+      gl.uniform1f(DecayLocation, Decay);
+      gl.uniform1f(TargetLocation,Target);
+      gl.uniform3fv(eyePosLocation, eyePos);
+      gl.uniform1f(SpecShineLocation, SpecShine);
       gl.bindVertexArray(vao_mole);
 
       gl.drawElements(gl.TRIANGLES, indices_mole.length, gl.UNSIGNED_SHORT, 0);
