@@ -1,5 +1,5 @@
 <html>
-    <link href="style.css" type="text/css" rel="stylesheet">
+    <link href="style1.css" type="text/css" rel="stylesheet">
 
 	<!-- Jquery -->
 	<script type="text/javascript" src="libraries/webgl-obj-loader.min.js"></script>
@@ -15,7 +15,7 @@
 	<script src="libraries/sweetalert.min.js" type="text/javascript"></script> 
 
 	<body>
-		<canvas id="canvas" width="960" height="600">
+		<canvas id="canvas" width="1300" height="800" margin-top="100">
 			Oops ... your browser doesn't support the HTML5 canvas element
 		</canvas>
 
@@ -25,12 +25,12 @@
 			<div class="single_slider"><p>Sideward angle: <span id="phi_value"></span> degrees</p><input type="range" min="0" max="360" step="1" value="0" class="slider" id="sl_phi"></div>
         </div>
 		<div class="score_container">
-			<p>Score: <span id="score_value"></span></p>
+			<p1>SCORE:<span id="score_value"></span></p1>
+			<i>Time left: <span id="time_value"></span> [s]</i>
 		</div>
-		<div id="reset_but">Reset</div>
+		<div id="reset_but">RESET</div>
 
 		</br>
-		<i>Time left: <span id="time_value"></span> [s]</i>
 		<script type="text/javascript" src="main.js"></script>
 	</body>
 </html>

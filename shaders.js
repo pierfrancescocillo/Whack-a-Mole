@@ -6,7 +6,7 @@ in vec3 a_normal;
 in vec2 a_uv;
 out vec2 uvFS;
 out vec3 fs_norm;
-out vec3 fs_pos;//op
+out vec3 fs_pos;
 uniform mat4 matrix; 
 uniform mat4 nMatrix;
 uniform mat4 pMatrix;

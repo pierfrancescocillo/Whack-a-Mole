@@ -141,39 +141,7 @@ reset_but.onclick = function(){
 }
 
 async function main() {
-/*
-  var vs_text = [
-  '#version 300 es',
-  '',
-  'in vec3 a_position;',
-  'in vec3 a_normal;',
-  'in vec2 a_uv;',
-  'out vec2 uvFS;',
-  '',
-  'uniform mat4 matrix;' ,
-  '',
-  'void main()',
-  '{',
-  '  uvFS=a_uv;',
-  '  gl_Position = matrix * vec4(a_position,1.0);',
-  '}'
-  ].join('\n');
 
-  var fs_text = [
-  '#version 300 es',
-  '',
-  'precision mediump float;',
-  '',
-  'in vec2 uvFS;',
-  'out vec4 outColor;',
-  'uniform sampler2D u_texture;',
-  '',
-  'void main()', 
-  '{',
-  '   outColor = texture(u_texture, uvFS);',
-  '}'
-  ].join('\n');
-*/
   var canvas = document.getElementById("canvas");
   
   //window.addEventListener("keydown", keyFunctionDown, false);
@@ -188,11 +156,7 @@ async function main() {
       document.write("GL context not opened");
       return;
   }
-/*
-  var vertexShader = utils.createShader(gl, gl.VERTEX_SHADER, vs_text);
-  var fragmentShader = utils.createShader(gl, gl.FRAGMENT_SHADER, fs_text);
-  program = utils.createProgram(gl, vertexShader, fragmentShader);
-*/
+
 var vertexShader = utils.createShader(gl, gl.VERTEX_SHADER, vertexShaderSource_cabinet);
 var fragmentShader = utils.createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource_cabinet);
 program= utils.createProgram(gl, vertexShader, fragmentShader);
@@ -221,10 +185,7 @@ var dirLightBeta=170;*/
   gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
   gl.clearColor(0.75,0.85,0.8,1.0);
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-  gl.enable(gl.DEPTH_TEST);/*
-  gl.enable(gl.CULL_FACE);
-  gl.frontFace(gl.CCW);
-  gl.cullFace(gl.BACK);*/
+  gl.enable(gl.DEPTH_TEST);
  
   positionAttributeLocation = gl.getAttribLocation(program, "a_position");  
   normalsAttributeLocation = gl.getAttribLocation(program, "a_normal");
@@ -266,7 +227,6 @@ var dirLightBeta=170;*/
   gl.enableVertexAttribArray(normalsAttributeLocation);
   gl.vertexAttribPointer(normalsAttributeLocation, 3, gl.FLOAT, false, 0, 0);
   
-
   var uvBuffer_cabinet = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, uvBuffer_cabinet);
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(uv_cabinet), gl.STATIC_DRAW);
@@ -561,7 +521,7 @@ gl.useProgram(program);
     time = time+timeInt;
 
     document.getElementById("score_value").innerHTML = score;
-    document.getElementById("time_value").innerHTML = duration - time*0.001;
+    document.getElementById("time_value").innerHTML = Math.round(((duration - time*0.001)+Number.EPSILON)*10)/ 10;
     if(time*0.001 > duration){
       clearInterval(refreshID);
       swal({
@@ -579,31 +539,6 @@ gl.useProgram(program);
 window.onload = main;
 
 //random functions
-function m4toUsual(m4){
-  var temp = [];
-  for(i=0;i<m4.length;i++){
-    temp[i] = m4[i];
-  }
-  return temp;
-}
-
-function MvMatrix(cam_pos,targ_pos,up_vec){
-  var Mv = [];
-  var v_z = [];
-  var v_x = [];
-  v_z[0] = (cam_pos[0] - targ_pos[0]) / math.norm([cam_pos[0] - targ_pos[0], cam_pos[1] - targ_pos[1], cam_pos[2] - targ_pos[2]]);
-  v_z[1] = (cam_pos[1] - targ_pos[1]) / math.norm([cam_pos[0] - targ_pos[0], cam_pos[1] - targ_pos[1], cam_pos[2] - targ_pos[2]]);
-  v_z[2] = (cam_pos[2] - targ_pos[2]) / math.norm([cam_pos[0] - targ_pos[0], cam_pos[1] - targ_pos[1], cam_pos[2] - targ_pos[2]]);
-
-  v_x[0] = math.cross(up_vec,v_z)[0] / math.norm(math.cross(up_vec,v_z));
-  v_x[1] = math.cross(up_vec,v_z)[1] / math.norm(math.cross(up_vec,v_z));
-  v_x[2] = math.cross(up_vec,v_z)[2] / math.norm(math.cross(up_vec,v_z));
-
-  var v_y = math.cross(v_z, v_z);
-
-  Mv = [v_x[0], v_x[1], v_x[2], -(v_x[0]*cam_pos[0] + v_x[1]*cam_pos[1] + v_x[2]*cam_pos[2]), v_y[0], v_y[1], v_y[2], -(v_y[0]*cam_pos[0] + v_y[1]*cam_pos[1] + v_y[2]*cam_pos[2]), v_z[0], v_z[1], v_z[2], -(v_z[0]*cam_pos[0] + v_z[1]*cam_pos[1] + v_z[2]*cam_pos[2]), 0, 0, 0, 1];
-  return Mv;
-}
 
 function MakeRotateArbMatrix(axis,a,point){
   if(!point){
@@ -631,37 +566,3 @@ function MakeRotateArbMatrix(axis,a,point){
   var R1 = utils.multiplyMatrices(utils.multiplyMatrices(utils.multiplyMatrices(utils.multiplyMatrices(utils.multiplyMatrices(utils.multiplyMatrices(T_R1,Ry_R1),Rz_R1),Rx_R1),utils.invertMatrix(Rz_R1)),utils.invertMatrix(Ry_R1)),utils.invertMatrix(T_R1));
 	return R1;
 }
-
-function vec_sum(a,b){
-  if(a.length!=b.length){
-    console.log("ERROS: the arrays must share the same length");
-    console.log("First is length", a.length);
-    console.log("Second is length ", b.length);
-  }
-  var d = [];
-  for(i=0;i<a.length;i++){
-    d[i] = a[i] + b[i];
-  }
-  return d;
-}
-
-function vec_sub(a,b){
-  if(a.length!=b.length){
-    console.log("ERROS: the arrays must share the same length");
-    console.log("First is length", a.length);
-    console.log("Second is length ", b.length);
-  }
-  var d = [];
-  for(i=0;i<a.length;i++){
-    d[i] = a[i] - b[i];
-  }
-  return d;
-}
-
-function vec_mul(A,a){
-  var d = [];
-  for(i=0;i<a.length;i++){
-    d[i] = a[i] * A;
-  }
-  return d;
-};
