@@ -64,6 +64,7 @@ var ConIn=80;
 var ConOut=30;
 var SpecShine=50.0;
 var LPos=[0.3,5.0,0.3];
+
 //altre variabili
 var keyCode;
 var duration = 45; //[s]
@@ -98,7 +99,6 @@ var emitColor=[80.0/255.0, 80.0/255.0, 80.0/255.0, 255.0/255.0];
 var emitColor2=[220.0/255.0, 220.0/255.0, 220.0/255.0, 255.0/255.0];
 var specularColor=[255.0/255.0, 255.0/255.0, 255.0/255.0, 255.0/255.0];
 var directionalLightColor = [170.0/255.0, 170.0/255.0, 170.0/255.0, 255.0/255.0];
-//var ambientLightColor=[113.0/255.0, 109.0/255.0, 116.0/255.0, 255.0/255.0];
 var ambientLightColor=[50.0/255.0, 50.0/255.0, 50.0/255.0, 255.0/255.0];
 
 //sliders
@@ -144,7 +144,6 @@ async function main() {
 
   var canvas = document.getElementById("canvas");
   
-  //window.addEventListener("keydown", keyFunctionDown, false);
   var path = window.location.pathname;
   var page = path.split("/").pop();
   baseDir = window.location.href.replace(page, '');
@@ -157,9 +156,9 @@ async function main() {
       return;
   }
 
-var vertexShader = utils.createShader(gl, gl.VERTEX_SHADER, vertexShaderSource_cabinet);
-var fragmentShader = utils.createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource_cabinet);
-program= utils.createProgram(gl, vertexShader, fragmentShader);
+  var vertexShader = utils.createShader(gl, gl.VERTEX_SHADER, vertexShaderSource_cabinet);
+  var fragmentShader = utils.createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource_cabinet);
+  program= utils.createProgram(gl, vertexShader, fragmentShader);
 
 
 
@@ -169,13 +168,11 @@ program= utils.createProgram(gl, vertexShader, fragmentShader);
 
   var dirLightAlpha=utils.degToRad(80);
   var dirLightBeta=utils.degToRad(0);
-/*
-var dirLightAlpha=-170;
-var dirLightBeta=170;*/
+
   var directionalLight = [Math.sin(dirLightAlpha) * Math.sin(dirLightBeta),
-                    Math.cos(dirLightAlpha),
-                    Math.sin(dirLightAlpha) * Math.cos(dirLightBeta)
-                    ];
+                          Math.cos(dirLightAlpha),
+                          Math.sin(dirLightAlpha) * Math.cos(dirLightBeta)
+  ];
 
   
   function degToRad(deg) {
@@ -206,6 +203,7 @@ var dirLightBeta=170;*/
   ConeInLocation=gl.getUniformLocation(program,"LConeIn");
   DecayLocation=gl.getUniformLocation(program,"LDecay");
   TargetLocation=gl.getUniformLocation(program,"LTarget");
+
   //BUFFERS FOR CABINET
   vertices_cabinet = model_cabinet.vertices;
   normals_cabinet  = model_cabinet.vertexNormals;
@@ -325,11 +323,6 @@ var dirLightBeta=170;*/
   
   function drawScene() {
 
-    /*
-    utils.resizeCanvasToDisplaySize(gl.canvas);
-    gl.clearColor(0, 0, 0, 0);
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-    */
     gl.clearColor(0.75,0.85,0.8,1.0);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.enable(gl.DEPTH_TEST);
@@ -352,7 +345,6 @@ var dirLightBeta=170;*/
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
     worldMatrix_cabinet = utils.identityMatrix();
-    //worldMatrix_cabinet = MakeRotateArbMatrix(time,[1,0,0]);
     viewWorldMatrix_cabinet = utils.multiplyMatrices(viewMatrix, worldMatrix_cabinet);
     projectionMatrix_cabinet = utils.multiplyMatrices(perspectiveMatrix, viewWorldMatrix_cabinet);
     var normalMatrix_cabinet=utils.invertMatrix(utils.transposeMatrix(worldMatrix_cabinet));
@@ -378,7 +370,8 @@ var dirLightBeta=170;*/
     gl.bindVertexArray(vao_cabinet);
 
     gl.drawElements(gl.TRIANGLES, indices_cabinet.length, gl.UNSIGNED_SHORT, 0);
-   gl.useProgram(program)
+    gl.useProgram(program);
+
     //DRAW HAMMER
     if(boolClick != 0){
       if(keyCode == 65){ //A
@@ -458,7 +451,8 @@ var dirLightBeta=170;*/
     gl.bindVertexArray(vao_hammer);
 
     gl.drawElements(gl.TRIANGLES, indices_hammer.length, gl.UNSIGNED_SHORT, 0);
-gl.useProgram(program);
+    gl.useProgram(program);
+
     //DRAW MOLES
     for(let i = 0; i<5; i++){
       if(Math.random()*20000<10){
@@ -521,7 +515,7 @@ gl.useProgram(program);
     time = time+timeInt;
 
     document.getElementById("score_value").innerHTML = score;
-    document.getElementById("time_value").innerHTML = Math.round(((duration - time*0.001)+Number.EPSILON)*10)/ 10;
+    document.getElementById("time_value").innerHTML = Math.round(((duration - time*0.001) + Number.EPSILON)*10)/ 10;
     if(time*0.001 > duration){
       clearInterval(refreshID);
       swal({
@@ -537,8 +531,6 @@ gl.useProgram(program);
 }  
 
 window.onload = main;
-
-//random functions
 
 function MakeRotateArbMatrix(axis,a,point){
   if(!point){
