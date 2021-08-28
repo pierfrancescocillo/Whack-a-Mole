@@ -1,5 +1,7 @@
 # Whack-A-Mole
 
+![](main-page.png)
+
 For the progect of the course of Computer Graphics we had to implement this classic arcade game. <br />
 
 It is possible to move the hammer using the five keys `a`, `s`, `d`, `z`, `x` to hit the correspondent five holes. <br />
