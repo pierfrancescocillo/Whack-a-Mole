@@ -24,8 +24,6 @@ precision mediump float;
 in vec2 uvFS;
 in vec3 fs_norm;
 in vec3 fs_pos;
-//uniform vec3 mDiffColor; //material diffuse color 
-uniform vec3 lightDirection; // directional light direction vec
 uniform vec4 lightColor;
 uniform vec4 emitColor;
 uniform sampler2D u_texture;
@@ -39,8 +37,6 @@ uniform float LConeIn;
 uniform float LDecay;
 uniform float LTarget;
 
-
-//out vec4 outColor;
 out vec4 color;
 void main() {
 
@@ -77,6 +73,5 @@ void main() {
   vec4 specularPhong = LScol * pow(LdotR, SpecShine);
 
   vec4 out_color= clamp(lambertColor+ambientAmbient+emit+specularPhong, 0.0,1.0);
-  //color=texcol;
 	color = vec4(out_color.rgb, 1.0);
 }`;

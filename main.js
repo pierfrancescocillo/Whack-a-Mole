@@ -96,7 +96,6 @@ var bool_hit = [0,0,0,0,0];
 
 //colors
 var emitColor=[80.0/255.0, 80.0/255.0, 80.0/255.0, 255.0/255.0];
-var emitColor2=[220.0/255.0, 220.0/255.0, 220.0/255.0, 255.0/255.0];
 var specularColor=[255.0/255.0, 255.0/255.0, 255.0/255.0, 255.0/255.0];
 var directionalLightColor = [170.0/255.0, 170.0/255.0, 170.0/255.0, 255.0/255.0];
 var ambientLightColor=[50.0/255.0, 50.0/255.0, 50.0/255.0, 255.0/255.0];
@@ -352,25 +351,10 @@ async function main() {
     gl.uniformMatrix4fv(matrixLocation, gl.FALSE, utils.transposeMatrix(projectionMatrix_cabinet));
     gl.uniformMatrix4fv(nMatrixLocation, gl.FALSE, utils.transposeMatrix(normalMatrix_cabinet));
     gl.uniformMatrix4fv(pMatrixLocation, gl.FALSE, utils.transposeMatrix(worldMatrix_cabinet));
-    gl.uniform3fv(lightDirLocation, directionalLight);
-    gl.uniform4fv(lightColLocation, directionalLightColor);
-    gl.uniform4fv(lightAmbientLocation, ambientLightColor);
-    gl.uniform4fv(specularColorLocation, specularColor);
-    gl.uniform4fv(emitColorLocation, emitColor);
-    gl.uniform3fv(LPosLocation, LPos);
-    gl.uniform1f(ConeOutLocation, ConOut);
-    gl.uniform1f(ConeInLocation, ConIn);
-    gl.uniform1f(DecayLocation, Decay);
-    gl.uniform1f(TargetLocation,Target);
-    gl.uniform3fv(eyePosLocation, eyePos);
-    gl.uniform1f(SpecShineLocation, SpecShine);
-    gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, texture);
-    gl.uniform1i(textLocation, 0);
     gl.bindVertexArray(vao_cabinet);
-
     gl.drawElements(gl.TRIANGLES, indices_cabinet.length, gl.UNSIGNED_SHORT, 0);
-    gl.useProgram(program);
+    //gl.useProgram(program);
+
 
     //DRAW HAMMER
     if(boolClick != 0){
@@ -429,30 +413,14 @@ async function main() {
     projectionMatrix_hammer = utils.multiplyMatrices(perspectiveMatrix, viewWorldMatrix_hammer);
     var normalMatrix_hammer=utils.invertMatrix(utils.transposeMatrix(worldMatrix_hammer));
     gl.uniformMatrix4fv(matrixLocation, gl.FALSE, utils.transposeMatrix(projectionMatrix_hammer));
-
-    gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, texture);
-    gl.uniform1i(textLocation, 0);
     gl.uniformMatrix4fv(nMatrixLocation, gl.FALSE, utils.transposeMatrix(normalMatrix_hammer));
     gl.uniformMatrix4fv(pMatrixLocation, gl.FALSE, utils.transposeMatrix(worldMatrix_hammer));
-    gl.uniform3fv(lightDirLocation, directionalLight);
-    gl.uniform4fv(lightColLocation, directionalLightColor);
-    gl.uniform4fv(lightAmbientLocation, ambientLightColor);
-    gl.uniform4fv(specularColorLocation, specularColor);
-    gl.uniform4fv(emitColorLocation, emitColor);
-    gl.uniform3fv(LPosLocation, LPos);
-    gl.uniform1f(ConeOutLocation, ConOut);
-    gl.uniform1f(ConeInLocation, ConIn);
-    gl.uniform1f(DecayLocation, Decay);
-    gl.uniform1f(TargetLocation,Target);
-    gl.uniform3fv(eyePosLocation, eyePos);
-    gl.uniform1f(SpecShineLocation, SpecShine);
-
     gl.bindVertexArray(vao_hammer);
 
     gl.drawElements(gl.TRIANGLES, indices_hammer.length, gl.UNSIGNED_SHORT, 0);
-    gl.useProgram(program);
 
+
+  //  gl.useProgram(program);
     //DRAW MOLES
     for(let i = 0; i<5; i++){
       if(Math.random()*20000<10){
